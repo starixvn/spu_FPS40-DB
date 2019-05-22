@@ -1,0 +1,44 @@
+/*
+Creator: 20190521@John
+Task:	 FPS Reform [Redmine ID: 105252]
+Server:  FPS_Admin
+
+Reviewer: Billy
+*/
+
+CREATE DATABASE IF NOT EXISTS FPS_Admin;
+
+CREATE TABLE IF NOT EXISTS FPS_Admin.Subscriber (
+	SubscriberID		INT NOT NULL AUTO_INCREMENT
+,	SubscriberName		VARCHAR(30) NOT NULL
+,	SubscriberIBCPrefix	VARCHAR(30) NOT NULL
+,	CreatedDate			DATETIME  NULL
+,	CreatedBy			INT NULL
+,	IsDeposit			TINYINT(1) NULL
+,	IsActive			TINYINT(1) NOT NULL DEFAULT '1'
+,	IsTest				TINYINT(1) NOT NULL DEFAULT '0'
+,	PRIMARY KEY	`CIX_Subscriber_SubscriberID` (`SubscriberID`)
+,	KEY `NCIX_Subscriber_SubscriberName_SubscriberIBCPrefix` (`SubscriberName`,`SubscriberIBCPrefix`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
+
+CREATE TABLE IF NOT EXISTS FPS_Admin.UserSubscriber (
+	UserID				INT NOT NULL
+,	SubscriberID		INT NOT NULL
+,	CreatedDate			DATETIME NULL
+,	CreatedBy			INT NULL
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS FPS_Admin.LogType (
+	LogTypeID			SMALLINT NOT NULL AUTO_INCREMENT
+,	LogTypeName			VARCHAR(50) NOT NULL
+,	LogTypeDescription	VARCHAR(200) CHARACTER SET utf8 DEFAULT NULL COMMENT 'NVARCHAR'
+,	PRIMARY KEY	`CIX_LogType_LogTypeID` (`LogTypeID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
+
+CREATE TABLE IF NOT EXISTS FPS_Admin.UserLog (
+	LogTypeID			SMALLINT NOT NULL
+,	SPName				VARCHAR(100) NULL
+,	LogInfo				VARCHAR(500) CHARACTER SET utf8 DEFAULT NULL COMMENT 'NVARCHAR'
+,	CreatedDate			DATETIME NULL
+,	CreatedBy			INT NULL
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
