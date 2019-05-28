@@ -16,11 +16,11 @@ USE FPS_DataCenter;
 		, UserAgent			VARCHAR(500)
 		, PluginID			BIGINT
 		, CreatedDate		DATETIME	NOT NULL
-		, LastAccessDate	DATETIME	NOT NULL	#Date Only
+		, LastAccessDate	DATETIME	COMMENT 'Date Only'	NOT NULL
         
-        , PRIMARY KEY PK_Device_DeviceID(DeviceID)
-        , UNIQUE INDEX UIX_Device_DeviceCode(DeviceCode)
-        , INDEX	IX_Device_LastAccessDate(LastAccessDate)
+        , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
+        , UNIQUE INDEX	UIX_Device_DeviceCode(DeviceCode)
+        , INDEX			IX_Device_LastAccessDate(LastAccessDate)
     );
     
 # =======Association============================================
@@ -30,7 +30,7 @@ USE FPS_DataCenter;
 		, SubscriberID	SMALLINT	NOT NULL
 		, CreatedDate	DATETIME	NOT NULL
         
-        , INDEX IX_Association_SubcriberID_AccountID (SubscriberID, AccountID)
+        , INDEX	IX_Association_SubcriberID_AccountID (SubscriberID, AccountID)
         , INDEX IX_Association_SubcriberID_DeviceID (SubscriberID, DeviceID) 
     );
 
@@ -38,44 +38,44 @@ USE FPS_DataCenter;
 	CREATE TABLE `Account`(
 		AccountID		BIGINT			AUTO_INCREMENT
 		, CustID		BIGINT			
-		, Username		VARCHAR(50)		CHARACTER SET utf8 COMMENT 'NVARCHAR'
-		, Username2		VARCHAR(50)		CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, Username		VARCHAR(50)		CHARACTER SET utf8
+		, Username2		VARCHAR(50)		CHARACTER SET utf8
 		, SubscriberID	SMALLINT
 		, RoleID		TINYINT
 		, CurrencyID	TINYINT
-		, CurrencyName	VARCHAR(50)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, CurrencyName	VARCHAR(50)		CHARACTER SET utf8
 		, IsDeposit		TINYINT(1)				
 		, CreatedDate	DATETIME		NOT NULL
         
-        , PRIMARY KEY PK_Account_AccountID (AccountID)        
-        , INDEX	IX_Account_CustID (CustID)
-        , INDEX	IX_Account_Username(Username)
-        , INDEX	IX_Account_Username2(Username2)
+        , PRIMARY KEY	PK_Account_AccountID (AccountID)        
+        , INDEX			IX_Account_CustID (CustID)
+        , INDEX			IX_Account_Username(Username)
+        , INDEX			IX_Account_Username2(Username2)
     );
 
 # =======Transactions============================================
 	CREATE TABLE `Transaction`(
 		TransID				BIGINT			AUTO_INCREMENT
 		, DeviceID			BIGINT			NOT NULL
-		, LoginName			VARCHAR(50)		CHARACTER SET utf8 COMMENT 'NVARCHAR'	NOT NULL	
+		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
 		, AccountID			BIGINT			NOT NULL
 		, SubscriberID		SMALLINT		
 		, TransDate			DATETIME		NOT	NULL
-		, CreatedDate		DATETIME		NOT	NULL		#(date only)
+		, CreatedDate		DATETIME		COMMENT 'Date Only'	NOT	NULL
 		, IPAddressID		BIGINT
 		, OSID				TINYINT
 		, BrowserID			TINYINT
 		, PluginID			BIGINT
-		, DeviceStatus		TINYINT			NOT	NULL		#(new, old, retrieve)
-		, Flagged			TINYINT							#(captcha & browserless)
+		, DeviceStatus		TINYINT			COMMENT 'new, old, retrieve'	NOT	NULL
+		, Flagged			TINYINT			COMMENT 'captcha & browserless'
 		, SubURLID			SMALLINT
 		, ActionResultID	TINYINT
 		, UserAgentID		INT
         
-        , PRIMARY KEY PK_Transaction_TransID (TransID)        
-        , INDEX IX_Transaction_DeviceID (DeviceID)
-        , INDEX IX_Transaction_AccountID (AccountID)
-        , INDEX IX_Transaction_CreatedDate (CreatedDate)
+        , PRIMARY KEY	PK_Transaction_TransID (TransID)        
+        , INDEX			IX_Transaction_DeviceID (DeviceID)
+        , INDEX			IX_Transaction_SubscriberIDAccountID (SubscriberID,AccountID)
+        , INDEX			IX_Transaction_CreatedDate (CreatedDate)
 	);
 
 # ===========================================================================
@@ -126,7 +126,7 @@ USE FPS_DataCenter;
         , City			VARCHAR(50)
         , ISPName		VARCHAR(256)
         
-        , PRIMARY KEY 	PK_LocationIPRange_IPRange (FromIP,ToIP)
+        , PRIMARY KEY	PK_LocationIPRange_IPRange (FromIP,ToIP)
     );
 
 # =======UserAgent============================================
@@ -135,21 +135,21 @@ USE FPS_DataCenter;
 		, UserAgent		VARCHAR(500)	NOT NULL
 		, UserAgentCode	VARCHAR(32)		NOT NULL
         
-        , PRIMARY KEY PK_UserAgent_UserAgentID (UserAgentID)
-        , INDEX IX_UserAgent_UserAgentCode (UserAgentCode)
+        , PRIMARY KEY	PK_UserAgent_UserAgentID (UserAgentID)
+        , INDEX			IX_UserAgent_UserAgentCode (UserAgentCode)
     );
 
 # ======EvidenceGroup=============================================
 	CREATE TABLE EvidenceGroup(
 		EvidenceGroupID			TINYINT			AUTO_INCREMENT
 		, EvidenceGroupName		VARCHAR(50)		NOT NULL
-		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8
 		, OrderNo				SMALLINT
 		, CreatedDate			DATETIME		NOT NULL
 		, CreatedBy				INT				NOT NULL
 		, IsActive				TINYINT(1)				NOT NULL
         
-        , PRIMARY KEY PK_EvidenceGroup_EvidenceGroupID (EvidenceGroupID)
+        , PRIMARY KEY	PK_EvidenceGroup_EvidenceGroupID (EvidenceGroupID)
     );
 
 # ========EvidenceType===========================================
@@ -158,14 +158,14 @@ USE FPS_DataCenter;
 		, EvidenceGroupID	TINYINT			NOT NULL
 		, EvidenceTypeCode	VARCHAR(10)		NOT NULL
 		, EvidenceTypeName	VARCHAR(50)		NOT NULL
-		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET utf8
 		, OrderNo			SMALLINT
 		, CreatedDate		DATETIME		NOT NULL
 		, CreatedBy			INT				NOT NULL
-		, IsActive			TINYINT(1)				NOT NULL
+		, IsActive			TINYINT(1)		NOT NULL
         
-        , PRIMARY KEY PK_EvidenceType_EvidenceTypeID (EvidenceTypeID)
-        , UNIQUE INDEX UIX_EvidenceType_EvidenceGroupID_EvidenceTypeCode (EvidenceGroupID, EvidenceTypeCode)
+        , PRIMARY KEY	PK_EvidenceType_EvidenceTypeID (EvidenceTypeID)
+        , UNIQUE INDEX	UIX_EvidenceType_EvidenceGroupID_EvidenceTypeCode (EvidenceGroupID, EvidenceTypeCode)
     );
 
 # =======TargetEvidence============================================
@@ -174,7 +174,7 @@ USE FPS_DataCenter;
 		, EvidenceTypeID	SMALLINT		NOT NULL
 		, EvidenceGroupID	TINYINT			NOT NULL
 		, EvidenceCode		VARCHAR(10)		NOT NULL
-		, Remark			VARCHAR(500)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, Remark			VARCHAR(500)	CHARACTER SET utf8
 		, TargetID			BIGINT			NOT NULL
 		, TargetType		TINYINT			NOT NULL
 		, TargetLevel		TINYINT			NOT NULL
@@ -182,11 +182,11 @@ USE FPS_DataCenter;
 		, SubscriberID		INT				NOT NULL
 		, CreatedDate		DATETIME		NOT NULL
 		, CreatedBy			INT				NOT NULL
-		, IsCreatedByMaster	TINYINT(1)				NOT NULL
-		, IsActive			TINYINT(1)				NOT NULL
+		, IsCreatedByMaster	TINYINT(1)		NOT NULL
+		, IsActive			TINYINT(1)		NOT NULL
         
-        , PRIMARY KEY PK_TargetEvidence_TargetEvidenceID (TargetEvidenceID)
-        , INDEX	IX_TargetEvidence(SubscriberID, TargetID, TargetType)
+        , PRIMARY KEY	PK_TargetEvidence_TargetEvidenceID (TargetEvidenceID)
+        , INDEX			IX_TargetEvidence(SubscriberID, TargetID, TargetType)
     );
 
 # ========Exceptions===========================================
@@ -195,12 +195,12 @@ USE FPS_DataCenter;
 		, DeviceID		BIGINT			NOT NULL
 		, AccountID		BIGINT			NOT NULL
 		, SubscriberID	SMALLINT		NOT NULL
-		, Remark		VARCHAR(200)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, Remark		VARCHAR(200)	CHARACTER SET utf8
 		, CreatedDate	DATETIME		NOT NULL
 		, CreatedBy		INT				NOT NULL
 		, IsActive		TINYINT(1)		NOT NULL
         
-        , PRIMARY KEY PK_Exceptions_ExceptionID(ExceptionID)
+        , PRIMARY KEY	PK_Exceptions_ExceptionID(ExceptionID)
         , UNIQUE INDEX	UIX_Exceptions_AccountID_DeviceID(AccountID, DeviceID)
     );
 
@@ -208,9 +208,9 @@ USE FPS_DataCenter;
 	CREATE TABLE LogType(
 		LogTypeID				SMALLINT		AUTO_INCREMENT
 		, LogTypeName			VARCHAR(50)
-		, LogTypeDescription	VARCHAR(200)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, LogTypeDescription	VARCHAR(200)	CHARACTER SET utf8
         
-        , PRIMARY KEY PK_LogType_LogTypeID(LogTypeID)
+        , PRIMARY KEY	PK_LogType_LogTypeID(LogTypeID)
     );
 
 # ========UserLog===========================================
@@ -218,7 +218,7 @@ USE FPS_DataCenter;
 		LogTypeID		SMALLINT
 		, SPName		VARCHAR(100)
 		, SubscriberID	INT
-		, LogInfo		VARCHAR(500)	CHARACTER SET utf8 COMMENT 'NVARCHAR'
+		, LogInfo		VARCHAR(500)	CHARACTER SET utf8
 		, CreatedDate	DATETIME
 		, CreatedBy		INT
     );
