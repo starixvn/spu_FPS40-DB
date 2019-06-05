@@ -8,17 +8,18 @@ Reviewer: Billy
 
 CREATE DATABASE IF NOT EXISTS FPS_Admin;
 
+
 CREATE TABLE IF NOT EXISTS FPS_Admin.Subscriber (
 	SubscriberID		INT NOT NULL AUTO_INCREMENT
 ,	SubscriberName		VARCHAR(30) NOT NULL
-,	SubscriberIBCPrefix	VARCHAR(30) NOT NULL
-,	CreatedDate			DATETIME  NULL
+,	SubScriberPrefix	VARCHAR(30) NULL
+,	CreatedDate			DATETIME 	NULL
 ,	CreatedBy			INT NULL
-,	IsDeposit			TINYINT(1) NULL
-,	IsActive			TINYINT(1) NOT NULL DEFAULT '1'
-,	IsTest				TINYINT(1) NOT NULL DEFAULT '0'
+,	IsDeposit			TINYINT(1) NULL				
+,	Status				TINYINT(1) NOT NULL			COMMENT '0: Inactive; 1: Active; 2: Unhandle (sub that not integrate, is insert new from transaction)'
+,	IsTest				TINYINT(1) NULL
 ,	PRIMARY KEY	`CIX_Subscriber_SubscriberID` (`SubscriberID`)
-,	KEY `NCIX_Subscriber_SubscriberName_SubscriberIBCPrefix` (`SubscriberName`,`SubscriberIBCPrefix`)
+,	KEY `NCIX_Subscriber_SubscriberName_SubScriberPrefix` (`SubscriberName`,`SubScriberPrefix`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
 
 CREATE TABLE IF NOT EXISTS FPS_Admin.UserSubscriber (

@@ -5,18 +5,17 @@ Server:  DataCenter
 
 Reviewer: Billy
 */
-USE FPS_DataCenter;
+
+CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 
 # ======Device=============================================
-	CREATE TABLE Device(
+	CREATE TABLE FPS_DataCenter.Device(
 		DeviceID			BIGINT 		AUTO_INCREMENT
 		, DeviceCode		VARCHAR(32) NOT NULL
-		, OS				VARCHAR(20)
-		, Browser			VARCHAR(50)
-		, UserAgent			VARCHAR(500)
+		, UserAgentID		INT
 		, PluginID			BIGINT
 		, CreatedDate		DATETIME	NOT NULL
-		, LastAccessDate	DATETIME	COMMENT 'Date Only'	NOT NULL
+		, LastAccessDate	DATETIME									COMMENT 'Date Only'	NOT NULL
         
         , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
         , UNIQUE INDEX	UIX_Device_DeviceCode(DeviceCode)
@@ -24,53 +23,53 @@ USE FPS_DataCenter;
     );
     
 # =======Association============================================
-	CREATE TABLE Association(
+	CREATE TABLE FPS_DataCenter.Association(
 		DeviceID		BIGINT		NOT NULL
 		, AccountID		BIGINT		NOT NULL
 		, SubscriberID	SMALLINT	NOT NULL
 		, CreatedDate	DATETIME	NOT NULL
         
-        , INDEX	IX_Association_SubcriberID_AccountID (SubscriberID, AccountID)
-        , INDEX IX_Association_SubcriberID_DeviceID (SubscriberID, DeviceID) 
+        , INDEX	IX_Association_SubscriberID_AccountID (SubscriberID, AccountID)
+        , INDEX IX_Association_SubscriberID_DeviceID (SubscriberID, DeviceID) 
     );
 
 # =======Account============================================
-	CREATE TABLE `Account`(
-		AccountID		BIGINT			AUTO_INCREMENT
-		, CustID		BIGINT			
-		, Username		VARCHAR(50)		CHARACTER SET utf8
-		, Username2		VARCHAR(50)		CHARACTER SET utf8
-		, SubscriberID	SMALLINT
-		, RoleID		TINYINT
-		, CurrencyID	TINYINT
-		, CurrencyName	VARCHAR(50)		CHARACTER SET utf8
-		, IsDeposit		TINYINT(1)				
-		, CreatedDate	DATETIME		NOT NULL
+	CREATE TABLE FPS_DataCenter.`Account`(
+		AccountID			BIGINT			AUTO_INCREMENT
+        , SubscriberID		SMALLINT		NOT NULL
+        , IsDeposit			TINYINT(1)
+        , FirstLoginName	VARCHAR(50)		CHARACTER SET utf8	NOT NULL
+		, CustID			BIGINT			
+		, Username			VARCHAR(50)		CHARACTER SET utf8
+		, Username2			VARCHAR(50)		CHARACTER SET utf8		
+		, RoleID			TINYINT
+		, CurrencyID		TINYINT
+		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8						
+		, CreatedDate		DATETIME		NOT NULL      
         
         , PRIMARY KEY	PK_Account_AccountID (AccountID)        
         , INDEX			IX_Account_CustID (CustID)
-        , INDEX			IX_Account_Username(Username)
-        , INDEX			IX_Account_Username2(Username2)
+        , INDEX			IX_Account_Username(SubscriberID, Username)
+        , INDEX			IX_Account_Username2(SubscriberID, Username2)
     );
 
 # =======Transactions============================================
-	CREATE TABLE `Transaction`(
+	CREATE TABLE FPS_DataCenter.`Transaction`(
 		TransID				BIGINT			AUTO_INCREMENT
 		, DeviceID			BIGINT			NOT NULL
 		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
 		, AccountID			BIGINT			NOT NULL
 		, SubscriberID		SMALLINT		
 		, TransDate			DATETIME		NOT	NULL
-		, CreatedDate		DATETIME		COMMENT 'Date Only'	NOT	NULL
+		, CreatedDate		DATETIME								COMMENT 'Date Only'	NOT	NULL
 		, IPAddressID		BIGINT
-		, OSID				TINYINT
-		, BrowserID			TINYINT
 		, PluginID			BIGINT
-		, DeviceStatus		TINYINT			COMMENT 'new, old, retrieve'	NOT	NULL
-		, Flagged			TINYINT			COMMENT 'captcha & browserless'
+		, DeviceStatus		TINYINT									COMMENT 'new, old, retrieve'	NOT	NULL
+		, Flagged			TINYINT									COMMENT 'captcha & browserless'
 		, SubURLID			SMALLINT
 		, ActionResultID	TINYINT
 		, UserAgentID		INT
+        , StagingTransID	BIGINT
         
         , PRIMARY KEY	PK_Transaction_TransID (TransID)        
         , INDEX			IX_Transaction_DeviceID (DeviceID)
@@ -79,9 +78,9 @@ USE FPS_DataCenter;
 	);
 
 # ===========================================================================
-	CREATE TABLE OS(
+	CREATE TABLE FPS_DataCenter.OS(
 		OSID			TINYINT			AUTO_INCREMENT
-		, OS_Name		VARCHAR(20)
+		, OSName		VARCHAR(20)
         , CreatedDate	DATETIME		NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID (OSID)
@@ -89,7 +88,7 @@ USE FPS_DataCenter;
 
 
 # ===========================================================================
-	CREATE TABLE Browser(
+	CREATE TABLE FPS_DataCenter.Browser(
 		BrowserID			TINYINT			AUTO_INCREMENT
 		, BrowserName		VARCHAR(50)	
         , CreatedDate		DATETIME		NOT NULL
@@ -98,26 +97,28 @@ USE FPS_DataCenter;
     );
 
 # ===========================================================================
-	CREATE TABLE ActionResult(
+	CREATE TABLE FPS_DataCenter.ActionResult(
 		ActionResultID			TINYINT			AUTO_INCREMENT
 		, ActionResultName		VARCHAR(100)
-        , CreatedDate			DATETIME		NOT NULL
+        , Status				TINYINT(1)						COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
+        , CreatedDate			DATETIME		NOT NULL		COMMENT 'Date Only'
         
         , PRIMARY KEY 	PK_ActionResult_ActionResultID (ActionResultID)
     );
 
 # ===========================================================================
-	CREATE TABLE SubcriberURL(
-		SubcriberURLID			SMALLINT		AUTO_INCREMENT
+	
+    CREATE TABLE FPS_DataCenter.SubscriberURL(
+		SubscriberURLID			SMALLINT		AUTO_INCREMENT
 		, URL					VARCHAR(250)
-        , SubcriberID			SMALLINT
+        , SubscriberID			SMALLINT
         , CreatedDate			DATETIME		NOT NULL
         
-        , PRIMARY KEY 	PK_SubcriberURL_SubcriberURLID (SubcriberURLID)
+        , PRIMARY KEY 	PK_SubscriberURL_SubscriberURLID (SubscriberURLID)
     );
 
 # ===========================================================================
-	CREATE TABLE LocationIPRange(
+	CREATE TABLE FPS_DataCenter.LocationIPRange(
 		FromIP			BIGINT
         , ToIP			BIGINT
         , CountryCode	BIGINT
@@ -130,17 +131,19 @@ USE FPS_DataCenter;
     );
 
 # =======UserAgent============================================
-	CREATE TABLE UserAgent(
+	CREATE TABLE FPS_DataCenter.UserAgent(
 		UserAgentID		INT				AUTO_INCREMENT
 		, UserAgent		VARCHAR(500)	NOT NULL
 		, UserAgentCode	VARCHAR(32)		NOT NULL
+        , BrowserID		TINYINT(1)		NOT NULL
+        , OSID			TINYINT(1)
         
         , PRIMARY KEY	PK_UserAgent_UserAgentID (UserAgentID)
         , INDEX			IX_UserAgent_UserAgentCode (UserAgentCode)
     );
 
 # ======EvidenceGroup=============================================
-	CREATE TABLE EvidenceGroup(
+	CREATE TABLE FPS_DataCenter.EvidenceGroup(
 		EvidenceGroupID			TINYINT			AUTO_INCREMENT
 		, EvidenceGroupName		VARCHAR(50)		NOT NULL
 		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8
@@ -153,7 +156,7 @@ USE FPS_DataCenter;
     );
 
 # ========EvidenceType===========================================
-	CREATE TABLE EvidenceType(
+	CREATE TABLE FPS_DataCenter.EvidenceType(
 		EvidenceTypeID		SMALLINT		AUTO_INCREMENT
 		, EvidenceGroupID	TINYINT			NOT NULL
 		, EvidenceTypeCode	VARCHAR(10)		NOT NULL
@@ -169,7 +172,7 @@ USE FPS_DataCenter;
     );
 
 # =======TargetEvidence============================================
-	CREATE TABLE TargetEvidence(
+	CREATE TABLE FPS_DataCenter.TargetEvidence(
 		TargetEvidenceID	BIGINT			AUTO_INCREMENT
 		, EvidenceTypeID	SMALLINT		NOT NULL
 		, EvidenceGroupID	TINYINT			NOT NULL
@@ -190,7 +193,7 @@ USE FPS_DataCenter;
     );
 
 # ========Exceptions===========================================
-	CREATE TABLE Exception(
+	CREATE TABLE FPS_DataCenter.Exception(
 		ExceptionID		INT				AUTO_INCREMENT
 		, DeviceID		BIGINT			NOT NULL
 		, AccountID		BIGINT			NOT NULL
@@ -205,7 +208,7 @@ USE FPS_DataCenter;
     );
 
 # ========LogType===========================================
-	CREATE TABLE LogType(
+	CREATE TABLE FPS_DataCenter.LogType(
 		LogTypeID				SMALLINT		AUTO_INCREMENT
 		, LogTypeName			VARCHAR(50)
 		, LogTypeDescription	VARCHAR(200)	CHARACTER SET utf8
@@ -214,7 +217,7 @@ USE FPS_DataCenter;
     );
 
 # ========UserLog===========================================
-	CREATE TABLE UserLog(
+	CREATE TABLE FPS_DataCenter.UserLog(
 		LogTypeID		SMALLINT
 		, SPName		VARCHAR(100)
 		, SubscriberID	INT
