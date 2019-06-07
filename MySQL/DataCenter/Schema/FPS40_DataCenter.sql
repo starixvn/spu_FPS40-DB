@@ -62,14 +62,15 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, SubscriberID		SMALLINT		
 		, TransDate			DATETIME		NOT	NULL
 		, CreatedDate		DATETIME								COMMENT 'Date Only'	NOT	NULL
-		, IPAddressID		BIGINT
+		, IP				BIGINT
+        , IPRangeID			INT
 		, PluginID			BIGINT
 		, DeviceStatus		TINYINT									COMMENT 'new, old, retrieve'	NOT	NULL
 		, Flagged			TINYINT									COMMENT 'captcha & browserless'
 		, SubURLID			SMALLINT
 		, ActionResultID	TINYINT
 		, UserAgentID		INT
-        , StagingTransID	BIGINT
+        , StagingTransID	BIGINT			UNIQUE
         
         , PRIMARY KEY	PK_Transaction_TransID (TransID)        
         , INDEX			IX_Transaction_DeviceID (DeviceID)
@@ -99,7 +100,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
 		ActionResultID			TINYINT			AUTO_INCREMENT
-		, ActionResultName		VARCHAR(100)
+		, ActionResultKey		VARCHAR(100)	CHARACTER SET utf8	NOT NULL
         , Status				TINYINT(1)						COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
         , CreatedDate			DATETIME		NOT NULL		COMMENT 'Date Only'
         
@@ -118,16 +119,18 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
     );
 
 # ===========================================================================
-	CREATE TABLE FPS_DataCenter.LocationIPRange(
-		FromIP			BIGINT
+	CREATE TABLE FPS_DataCenter.IPRange(
+		IPRangeID		INT				AUTO_INCREMENT
+		, FromIP		BIGINT
         , ToIP			BIGINT
         , CountryCode	BIGINT
         , CountryName	VARCHAR(64)
         , Region		VARCHAR(128)
         , City			VARCHAR(50)
         , ISPName		VARCHAR(256)
+        , Status		TINYINT(1)        COMMENT '0: Inactive; 1: Active'
         
-        , PRIMARY KEY	PK_LocationIPRange_IPRange (FromIP,ToIP)
+        , PRIMARY KEY	PK_IPRange_IPRangeID (IPRangeID)
     );
 
 # =======UserAgent============================================

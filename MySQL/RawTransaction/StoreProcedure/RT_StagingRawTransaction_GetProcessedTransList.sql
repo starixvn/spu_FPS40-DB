@@ -6,9 +6,7 @@ BEGIN
 	
     DECLARE MaxStagingTransID BIGINT;
     
-    SET MaxStagingTransID = (SELECT MAX(st.StagingTransID) FROM StagingRawTransaction AS st WHERE st.IsProcessed = 0);
-    
-     # RETURN Transaction List
+    # RETURN Transaction List
     SELECT	StagingTransID	
 			, DeviceCode
 			, LoginName
@@ -23,8 +21,7 @@ BEGIN
 			, UserAgent
 			, CapturedData
 	FROM 	StagingRawTransaction AS st
-	WHERE	st.StagingTransID <= MaxStagingTransID
-			AND st.IsProcessed = 0;
+	WHERE	st.IsProcessed = 0;
 
 END $$
 DELIMITER ;

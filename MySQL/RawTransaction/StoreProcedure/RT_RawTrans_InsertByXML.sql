@@ -1,4 +1,4 @@
-DROP PROCEDURE IF EXISTS FPS_RawTrans.RT_RawTrans_InsertByXML;
+#DROP PROCEDURE IF EXISTS FPS_RawTrans.RT_RawTrans_InsertByXML;
 
 DELIMITER $$
 USE `FPS_RawTrans`$$
@@ -63,7 +63,7 @@ BEGIN
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::CapturedData'))
 		);
-		/*
+		
 		CALL `FPS_RawTrans`.`RT_StagingRawTrans_Insert`
 		( 
 		 EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
@@ -78,7 +78,7 @@ BEGIN
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::CapturedData'))
 		 , 0
-		);*/
+		);
     
 	END WHILE;
     

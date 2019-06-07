@@ -1,4 +1,4 @@
-CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction_CaseyTest('
+CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction('
 		<root>
 		<transaction StagingTransID="3"
 					DeviceCode="DV010001"
@@ -6,7 +6,7 @@ CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction_CaseyTest('
                     SubscriberName="Subcriber02" 
                     TransDate="2019-05-29 00:05:37"
                     CreatedDate="2019-05-29"
-                    IPID="15432" PluginID="1" 
+                    IP="15432" PluginID="1" 
                     DeviceStatus="1"
                     URL="http//bcl.com" 
 					ActionResult="Login Successfully"
@@ -16,4 +16,4 @@ CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction_CaseyTest('
                     Flagged="0"
                     OSName="Window"/>
 		</root>
-		', 15, @op_ErrorCode, @op_ErrorMessage)
+		', @op_ErrorCode, @op_ErrorMessage)
