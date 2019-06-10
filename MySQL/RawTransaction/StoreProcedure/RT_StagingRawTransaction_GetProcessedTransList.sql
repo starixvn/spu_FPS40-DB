@@ -1,7 +1,18 @@
-DELIMITER $$
-USE `FPS_Admin`$$
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Get Transaction List has not transferred (processed) to FPS_DataCenter DB
+	DB: FPS_RawTrans
+	Original:
 
-CREATE DEFINER=`fps`@`%` PROCEDURE `RT_StagingRawTransaction_GetProcessedTransList`()
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+DROP PROCEDURE IF EXISTS FPS_RawTrans.RT_StagingRawTransaction_GetProcessedTransList;
+
+DELIMITER $$
+USE FPS_RawTrans$$
+
+CREATE PROCEDURE FPS_RawTrans.RT_StagingRawTransaction_GetProcessedTransList()
 BEGIN
 	
     DECLARE MaxStagingTransID BIGINT;

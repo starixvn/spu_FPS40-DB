@@ -3,7 +3,7 @@ Creator: 20190521@Casey.Huynh
 Task:    Create Schema FPS4.0 - Data Center
 Server:  DataCenter
 
-Reviewer: Billy
+Reviewer: 
 */
 
 CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
@@ -15,12 +15,12 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, UserAgentID		INT
 		, PluginID			BIGINT
 		, CreatedDate		DATETIME	NOT NULL
-		, LastAccessDate	DATETIME									COMMENT 'Date Only'	NOT NULL
+		, LastAccessDate	DATETIME					COMMENT 'Date Only'	NOT NULL
         
         , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
         , UNIQUE INDEX	UIX_Device_DeviceCode(DeviceCode)
         , INDEX			IX_Device_LastAccessDate(LastAccessDate)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
     
 # =======Association============================================
 	CREATE TABLE FPS_DataCenter.Association(
@@ -31,7 +31,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , INDEX	IX_Association_SubscriberID_AccountID (SubscriberID, AccountID)
         , INDEX IX_Association_SubscriberID_DeviceID (SubscriberID, DeviceID) 
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Account============================================
 	CREATE TABLE FPS_DataCenter.`Account`(
@@ -51,7 +51,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , INDEX			IX_Account_CustID (CustID)
         , INDEX			IX_Account_Username(SubscriberID, Username)
         , INDEX			IX_Account_Username2(SubscriberID, Username2)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Transactions============================================
 	CREATE TABLE FPS_DataCenter.`Transaction`(
@@ -76,7 +76,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , INDEX			IX_Transaction_DeviceID (DeviceID)
         , INDEX			IX_Transaction_SubscriberIDAccountID (SubscriberID,AccountID)
         , INDEX			IX_Transaction_CreatedDate (CreatedDate)
-	);
+	 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.OS(
@@ -85,7 +85,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , CreatedDate	DATETIME		NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID (OSID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 
 # ===========================================================================
@@ -95,7 +95,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , CreatedDate		DATETIME		NOT NULL
         
         , PRIMARY KEY 	PK_Browser_BrowserID (BrowserID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
@@ -105,7 +105,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , CreatedDate			DATETIME		NOT NULL		COMMENT 'Date Only'
         
         , PRIMARY KEY 	PK_ActionResult_ActionResultID (ActionResultID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	
@@ -116,7 +116,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , CreatedDate			DATETIME		NOT NULL
         
         , PRIMARY KEY 	PK_SubscriberURL_SubscriberURLID (SubscriberURLID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.IPRange(
@@ -131,7 +131,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , Status		TINYINT(1)        COMMENT '0: Inactive; 1: Active'
         
         , PRIMARY KEY	PK_IPRange_IPRangeID (IPRangeID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======UserAgent============================================
 	CREATE TABLE FPS_DataCenter.UserAgent(
@@ -143,7 +143,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , PRIMARY KEY	PK_UserAgent_UserAgentID (UserAgentID)
         , INDEX			IX_UserAgent_UserAgentCode (UserAgentCode)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ======EvidenceGroup=============================================
 	CREATE TABLE FPS_DataCenter.EvidenceGroup(
@@ -156,7 +156,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, IsActive				TINYINT(1)				NOT NULL
         
         , PRIMARY KEY	PK_EvidenceGroup_EvidenceGroupID (EvidenceGroupID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========EvidenceType===========================================
 	CREATE TABLE FPS_DataCenter.EvidenceType(
@@ -172,7 +172,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , PRIMARY KEY	PK_EvidenceType_EvidenceTypeID (EvidenceTypeID)
         , UNIQUE INDEX	UIX_EvidenceType_EvidenceGroupID_EvidenceTypeCode (EvidenceGroupID, EvidenceTypeCode)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======TargetEvidence============================================
 	CREATE TABLE FPS_DataCenter.TargetEvidence(
@@ -193,7 +193,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , PRIMARY KEY	PK_TargetEvidence_TargetEvidenceID (TargetEvidenceID)
         , INDEX			IX_TargetEvidence(SubscriberID, TargetID, TargetType)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========Exceptions===========================================
 	CREATE TABLE FPS_DataCenter.Exception(
@@ -208,7 +208,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , PRIMARY KEY	PK_Exceptions_ExceptionID(ExceptionID)
         , UNIQUE INDEX	UIX_Exceptions_AccountID_DeviceID(AccountID, DeviceID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========LogType===========================================
 	CREATE TABLE FPS_DataCenter.LogType(
@@ -217,7 +217,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, LogTypeDescription	VARCHAR(200)	CHARACTER SET utf8
         
         , PRIMARY KEY	PK_LogType_LogTypeID(LogTypeID)
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========UserLog===========================================
 	CREATE TABLE FPS_DataCenter.UserLog(
@@ -227,7 +227,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, LogInfo		VARCHAR(500)	CHARACTER SET utf8
 		, CreatedDate	DATETIME
 		, CreatedBy		INT
-    );
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===================================================
 

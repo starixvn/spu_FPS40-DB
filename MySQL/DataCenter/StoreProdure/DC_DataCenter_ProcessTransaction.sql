@@ -1,9 +1,18 @@
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Process data from raw to data center
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
 DROP PROCEDURE IF EXISTS FPS_DataCenter.DC_DataCenter_ProcessTransaction;
 
 DELIMITER $$
-USE `FPS_DataCenter`$$
+USE FPS_DataCenter$$
 
-CREATE DEFINER=`fps`@`%` PROCEDURE `DC_DataCenter_ProcessTransaction`(IN ip_TransXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
+CREATE PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
 
 BEGIN
 	DECLARE RowIndex 		INT UNSIGNED DEFAULT 0;
@@ -69,20 +78,20 @@ BEGIN
 					, PluginID, DeviceStatus, URL, ActionResult, UserAgent, UserAgentCode, BrowserName, OSName, Flagged)
 		SELECT 	EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::StagingTransID'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::LoginName'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::TransDate'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::CreatedDate'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::IP'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::PluginID'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::DeviceStatus'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::URL'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::ActionResult'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::UserAgentCode'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::BrowserName'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::OSName'))
-				 , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::Flagged')
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::LoginName'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::TransDate'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::CreatedDate'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::IP'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::PluginID'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::DeviceStatus'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::URL'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::ActionResult'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::UserAgentCode'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::BrowserName'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::OSName'))
+				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::Flagged')
 		);
     
 	END WHILE;    
@@ -216,28 +225,28 @@ BEGIN
     
     INSERT INTO FPS_DataCenter.Account
 	(
-				CustID,
-				Username,
-				Username2,
-				SubscriberID,
-				RoleID,
-				CurrencyID,
-				CurrencyName,
-				IsDeposit,
-				CreatedDate,
-				FirstLoginName
+		CustID
+		, Username
+		, Username2
+		, SubscriberID
+		, RoleID
+		, CurrencyID
+		, CurrencyName
+		, IsDeposit
+		, CreatedDate
+		, FirstLoginName
     )
     SELECT
-				NULL AS CustID,
-				NULL AS Username,
-				NULL AS Username2,
-				ts.SubscriberID,
-				NULL AS RoleID,
-				NULL AS CurrencyID,
-				NULL AS CurrencyName,
-				MIN(ts.IsDeposit),
-				MIN(ts.CreatedDate),
-				ts.LoginName AS FirstLoginName
+		NULL AS CustID
+		, NULL AS Username
+		, NULL AS Username2
+		, ts.SubscriberID
+		, NULL AS RoleID
+		, NULL AS CurrencyID
+		, NULL AS CurrencyName
+		, MIN(ts.IsDeposit)
+		, MIN(ts.CreatedDate)
+		, ts.LoginName AS FirstLoginName
 	FROM		Temp_Transaction AS ts
 	LEFT JOIN	FPS_DataCenter.Account AS ac
 				ON	ts.SubscriberID = ac.SubscriberID
@@ -257,7 +266,7 @@ BEGIN
     UPDATE 	Temp_Transaction AS ts
 			, FPS_DataCenter.Account AS ac
 	SET		ts.AccountID = ac.AccountID
-    WHERE	( ts.LoginName = ac.FirstLoginName
+    WHERE	( ts.LoginName 		= ac.FirstLoginName
 				OR ts.LoginName = ac.UserName
 				OR ts.LoginName = ac.Username2
 				OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2
@@ -275,9 +284,9 @@ BEGIN
                 , MIN(ts.CreatedDate)
     FROM		Temp_Transaction AS ts
     LEFT JOIN	FPS_DataCenter.Association AS ac
-				ON	(ts.SubscriberID = ac.SubscriberID
-                AND	ts.AccountID 	= ac.AccountID
-                AND	ts.DeviceID		= ac.DeviceID)
+				ON	(ts.SubscriberID	= ac.SubscriberID
+                AND	ts.AccountID 		= ac.AccountID
+                AND	ts.DeviceID			= ac.DeviceID)
 	WHERE		ac.AccountID IS NULL
     GROUP BY	ts.DeviceID
 				, ts.AccountID
