@@ -9,7 +9,7 @@
 */
 
 DELIMITER $$
-CREATE PROCEDURE FPS_StagingRawTrans.ST_RawTransaction_GetTransList(IN ip_IsProcessed TINYINT(1))
+CREATE PROCEDURE FPS_StagingRawTrans.ST_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1))
 BEGIN
   
     # RETURN Transaction List
