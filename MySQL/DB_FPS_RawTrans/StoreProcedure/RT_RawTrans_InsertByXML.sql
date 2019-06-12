@@ -7,12 +7,11 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-DROP PROCEDURE IF EXISTS FPS_RawTrans.RT_RawTrans_InsertByXML;
 
 DELIMITER $$
 USE FPS_RawTrans$$
 
-CREATE PROCEDURE FPS_RawTrans.RT_RawTrans_InsertByXML(IN ip_RawTransXml TEXT)
+CREATE PROCEDURE FPS_RawTrans.RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
 BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
@@ -71,23 +70,7 @@ BEGIN
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::CapturedData'))
 		);
-		/*
-		CALL FPS_RawTrans.RT_StagingRawTrans_Insert
-		( 
-		 EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::LoginName'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::TransDate'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::IP'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::PluginID'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceStatus'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::URL'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::ActionResult'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::CapturedData'))
-		 , 0
-		);
-		*/
+		
 	END WHILE;
     
     INSERT INTO FPS_RawTrans.RawTransaction
@@ -95,6 +78,7 @@ BEGIN
 		, LoginName
 		, SubscriberName
 		, TransDate
+        , CreatedDate
 		, IP
 		, PluginID
 		, DeviceStatus
@@ -104,18 +88,19 @@ BEGIN
 		, CapturedData
 	)
 	SELECT
-			DeviceCode
-			, LoginName
-			, SubscriberName
-			, TransDate
-			, IP
-			, PluginID
-			, DeviceStatus
-			, URL
-			, ActionResult
-			, UserAgent
-			, CapturedData
-	FROM	Temp_RawTransaction;
+			rt.DeviceCode
+			, rt.LoginName
+			, rt.SubscriberName
+			, rt.TransDate
+            , DATE(rt.TransDate) AS CreatedDate
+			, rt.IP
+			, rt.PluginID
+			, rt.DeviceStatus
+			, rt.URL
+			, rt.ActionResult
+			, rt.UserAgent
+			, rt.CapturedData
+	FROM	Temp_RawTransaction rt;
     
     
 END$$

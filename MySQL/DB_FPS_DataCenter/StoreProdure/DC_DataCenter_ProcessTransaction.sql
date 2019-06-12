@@ -13,7 +13,6 @@ DELIMITER $$
 USE FPS_DataCenter$$
 
 CREATE PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT)
-
 BEGIN
 	DECLARE RowIndex 		INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount 		INT UNSIGNED;
@@ -62,7 +61,7 @@ BEGIN
 	
     
     #========1.GET DATA FROM XML TO TEMP TABLE=================================================================================
-    SET RowCount = extractValue(ip_TransXml,'count(//root/transaction)');      
+    SET RowCount = EXTRACTVALUE(ip_TransXml,'count(//root/transaction)');      
     
     WHILE RowIndex < RowCount DO
 		SET RowIndex := RowIndex + 1;
@@ -91,10 +90,9 @@ BEGIN
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::Flagged')
 		);
     
-	END WHILE;    
-   
-    #========INSERT: Subscriber which are unhandled interagtion=============================================================
-   
+	END WHILE;
+    
+    #========INSERT: Subscriber which are unhandled interagtion=============================================================   
 	INSERT INTO FPS_Admin.Subscriber (SubscriberName, SubscriberPrefix, CreatedDate, CreatedBy, IsDeposit, Status, IsTest)
 	SELECT 		ts.SubscriberName
 					, NULL AS SubscriberPrefix
@@ -116,8 +114,7 @@ BEGIN
             , ts.SubScriberPrefix 	= sb.SubScriberPrefix
     WHERE	ts.SubscriberName = sb.SubscriberName;    
     
-     #========INSERT: SubscriberURL if not Existing============================================================================
-   
+     #========INSERT: SubscriberURL if not Existing============================================================================   
     INSERT INTO FPS_DataCenter.SubscriberURL (URL, SubscriberID, CreatedDate)
     SELECT 		ts.URL
 				, ts.SubscriberID
@@ -128,8 +125,7 @@ BEGIN
 	WHERE		su.URL IS NULL
     GROUP BY	ts.URL, ts.SubscriberID;  
     
-	#========INSERT: Get New Agent to temp table================================================================================
-    
+	#========INSERT: Get New Agent to temp table================================================================================    
     INSERT INTO Temp_NewUserAgent(UserAgentCode, UserAgent, BrowserName, OSName, CreatedDate)
 	SELECT		ts.UserAgentCode
 				, ts.UserAgent
@@ -142,8 +138,7 @@ BEGIN
 	WHERE		ua.UserAgentCode IS NULL
     GROUP BY	ts.UserAgentCode, ts.UserAgent, ts.BrowserName, ts.OSName;
     
-	#####===INSERT: BROWSER======================================================================================================
-  
+	#####===INSERT: BROWSER======================================================================================================  
     INSERT INTO FPS_DataCenter.Browser(BrowserName, CreatedDate)
     SELECT 		ts.BrowserName
 				, MIN(ts.CreatedDate) AS CreatedDate
@@ -153,7 +148,7 @@ BEGIN
 	WHERE		br.BrowserName IS NULL
     GROUP BY	ts.BrowserName;    
     
-    #####===INSERT: OS============================================================================================================   
+    #####===INSERT: OS=========================================================================================================== 
 	INSERT INTO FPS_DataCenter.OS(OSName, CreatedDate)
     SELECT 		ts.OSName
 				, MIN(ts.CreatedDate) AS CreatedDate
@@ -305,7 +300,7 @@ BEGIN
 						OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2);
                         
     #==========UPDATE: StagingRawTransaction.IsProcessed = 1================================================================================================================
-	UPDATE 	FPS_RawTrans.StagingRawTransaction AS st
+	UPDATE 	FPS_StagingRawTrans.RawTransaction AS st
 				, Temp_Transaction AS ts
 	SET		st.IsProcessed = 1
 	WHERE	st.StagingTransID = ts.StagingTransID
