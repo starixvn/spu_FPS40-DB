@@ -12,7 +12,7 @@ DROP PROCEDURE IF EXISTS FPS_DataCenter.DC_DataCenter_ProcessTransaction;
 DELIMITER $$
 USE FPS_DataCenter$$
 
-CREATE PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
+CREATE PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT)
 
 BEGIN
 	DECLARE RowIndex 		INT UNSIGNED DEFAULT 0;
@@ -48,7 +48,7 @@ BEGIN
 	);
     
 	   
-	#=======================================================================================
+	#========================================================================================================================
     DROP TABLE IF EXISTS Temp_NewUserAgent;
 	
 	CREATE TEMPORARY TABLE Temp_NewUserAgent
@@ -60,8 +60,6 @@ BEGIN
         ,   CreatedDate		DATETIME		COMMENT 'Date Only'
 	);
 	
-	SET op_ErrorCode	= 1;
-    SET op_ErrorMessage	= 'Start: read xml file';
     
     #========1.GET DATA FROM XML TO TEMP TABLE=================================================================================
     SET RowCount = extractValue(ip_TransXml,'count(//root/transaction)');      
@@ -71,8 +69,7 @@ BEGIN
 		SET XpathRow = CONCAT(
 				'//root/transaction['
 			,   RowIndex
-			,   ']');         
-            
+			,   ']');                     
 		
 		INSERT INTO Temp_Transaction(StagingTransID, DeviceCode, LoginName, SubscriberName, TransDate, CreatedDate, IP
 					, PluginID, DeviceStatus, URL, ActionResult, UserAgent, UserAgentCode, BrowserName, OSName, Flagged)
@@ -97,9 +94,7 @@ BEGIN
 	END WHILE;    
    
     #========INSERT: Subscriber which are unhandled interagtion=============================================================
-	SET op_ErrorCode	= 2;
-    SET op_ErrorMessage	= 'Start: Insert Subscriber';
-    
+   
 	INSERT INTO FPS_Admin.Subscriber (SubscriberName, SubscriberPrefix, CreatedDate, CreatedBy, IsDeposit, Status, IsTest)
 	SELECT 		ts.SubscriberName
 					, NULL AS SubscriberPrefix
@@ -121,10 +116,8 @@ BEGIN
             , ts.SubScriberPrefix 	= sb.SubScriberPrefix
     WHERE	ts.SubscriberName = sb.SubscriberName;    
     
-     #========INSERT: SubscriberURL if not Existing=========================================================================
-	SET op_ErrorCode	= 3;
-    SET op_ErrorMessage	= 'Start: Insert Subscriber';
-    
+     #========INSERT: SubscriberURL if not Existing============================================================================
+   
     INSERT INTO FPS_DataCenter.SubscriberURL (URL, SubscriberID, CreatedDate)
     SELECT 		ts.URL
 				, ts.SubscriberID
@@ -135,9 +128,7 @@ BEGIN
 	WHERE		su.URL IS NULL
     GROUP BY	ts.URL, ts.SubscriberID;  
     
-	#========INSERT: Get New Agent to temp table============================================================================== 
-	SET op_ErrorCode	= 4;
-    SET op_ErrorMessage	= 'Start:  Get New Agent to temp table';
+	#========INSERT: Get New Agent to temp table================================================================================
     
     INSERT INTO Temp_NewUserAgent(UserAgentCode, UserAgent, BrowserName, OSName, CreatedDate)
 	SELECT		ts.UserAgentCode
@@ -151,10 +142,8 @@ BEGIN
 	WHERE		ua.UserAgentCode IS NULL
     GROUP BY	ts.UserAgentCode, ts.UserAgent, ts.BrowserName, ts.OSName;
     
-	#####===INSERT: BROWSER
-    SET op_ErrorCode	= 5;
-    SET op_ErrorMessage	= 'Start:  Insert Browser';
-    
+	#####===INSERT: BROWSER======================================================================================================
+  
     INSERT INTO FPS_DataCenter.Browser(BrowserName, CreatedDate)
     SELECT 		ts.BrowserName
 				, MIN(ts.CreatedDate) AS CreatedDate
@@ -164,10 +153,7 @@ BEGIN
 	WHERE		br.BrowserName IS NULL
     GROUP BY	ts.BrowserName;    
     
-    #####===INSERT: OS============================================================================================================
-    SET op_ErrorCode	= 6;
-    SET op_ErrorMessage	= 'Start:  Insert OS';
-    
+    #####===INSERT: OS============================================================================================================   
 	INSERT INTO FPS_DataCenter.OS(OSName, CreatedDate)
     SELECT 		ts.OSName
 				, MIN(ts.CreatedDate) AS CreatedDate
@@ -177,10 +163,7 @@ BEGIN
 	WHERE		os.OSName IS NULL
     GROUP BY	ts.OSName;
     
-    #####===INSERT: UserAgent======================================================================================================
-    SET op_ErrorCode	= 7;
-    SET op_ErrorMessage	= 'Start:  Insert UserAgent';
-    
+    #####===INSERT: UserAgent======================================================================================================   
     INSERT INTO FPS_DataCenter.UserAgent(UserAgent, UserAgentCode, BrowserID, OSID)
     SELECT		ts.UserAgent
 				, ts.UserAgentCode
@@ -192,10 +175,7 @@ BEGIN
 	INNER JOIN	FPS_DataCenter.Browser AS br
 				ON ts.BrowserName = br.BrowserName;
     
-    #======INSERT: DEVICE===========================================================================================================
-    SET op_ErrorCode	= 8;
-    SET op_ErrorMessage	= 'Start:  Insert Device';
-    
+    #======INSERT: DEVICE===========================================================================================================    
     INSERT INTO Device(DeviceCode, UserAgentID, PluginID, CreatedDate, LastAccessDate)    
 	SELECT 		ts.DeviceCode
 				, MAX(ua.UserAgentID) AS UserAgentID
@@ -210,19 +190,13 @@ BEGIN
 	WHERE		dv.DeviceCode IS NULL
     GROUP BY	ts.DeviceCode;    
     
-	#======UPDATE: Temp_Transaction.DeviceID==========================================================================================
-    SET op_ErrorCode	= 9;
-    SET op_ErrorMessage	= 'Start:  Update DeviceID to Temp_Transaction';
-    
+	#======UPDATE: Temp_Transaction.DeviceID==========================================================================================    
     UPDATE 	Temp_Transaction AS ts
 			, FPS_DataCenter.Device AS dv
 	SET		ts.DeviceID		= dv.DeviceID
     WHERE	ts.DeviceCode	= dv.DeviceCode;
     
-    #=====INSERT: NEW ACCOUNT==========================================================================================================
-	SET op_ErrorCode	= 10;
-    SET op_ErrorMessage	= 'Start:  Insert Account';
-    
+    #=====INSERT: NEW ACCOUNT==========================================================================================================    
     INSERT INTO FPS_DataCenter.Account
 	(
 		CustID
@@ -258,11 +232,7 @@ BEGIN
 	WHERE		ac.AccountID IS NULL
     GROUP BY	ts.SubscriberID, ts.LoginName;    
     
-   #======UPDATE: Temp_Transaction.AccountID======================================================================================== 
-   
-	SET op_ErrorCode	= 11;
-    SET op_ErrorMessage	= 'Start:  Update AccountID to Temp_Transaction';
-    
+   #======UPDATE: Temp_Transaction.AccountID========================================================================================      
     UPDATE 	Temp_Transaction AS ts
 			, FPS_DataCenter.Account AS ac
 	SET		ts.AccountID = ac.AccountID
@@ -273,10 +243,7 @@ BEGIN
 			);	
 		
  
-	#========INSERT: Associations--========================================================================================================================
-    SET op_ErrorCode	= 12;
-    SET op_ErrorMessage	= 'Start:  Insert Association';
-    
+	#========INSERT: Associations--==========================================================================================    
     INSERT INTO FPS_DataCenter.Association(DeviceID, AccountID, SubscriberID, CreatedDate)
     SELECT		ts.DeviceID
 				, ts.AccountID
@@ -292,10 +259,7 @@ BEGIN
 				, ts.AccountID
 				, ts.SubscriberID;
     
-    #========================================================================================================
-    SET op_ErrorCode	= 13;
-    SET op_ErrorMessage	= 'Start:  Insert ActionResult';
-    
+    #========================================================================================================    
     INSERT INTO FPS_DataCenter.ActionResult(ActionResultKey, Status, CreatedDate)
 	SELECT 		ts.ActionResult              
                 , 2 AS Status
@@ -307,9 +271,6 @@ BEGIN
     GROUP BY	ts.ActionResult;   
     
     #========INSERT: Transaction===============================================================================================
-    SET op_ErrorCode	= 14;
-    SET op_ErrorMessage	= 'Start:  Insert Transaction';
-    
 	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, DeviceID, LoginName, AccountID
 				,  TransDate, CreatedDate, IP, IPRangeID, PluginID, DeviceStatus, Flagged,ActionResultID)                
 	SELECT 		ts.StagingTransID
@@ -344,20 +305,11 @@ BEGIN
 						OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2);
                         
     #==========UPDATE: StagingRawTransaction.IsProcessed = 1================================================================================================================
-    SET op_ErrorCode	= 15;
-	SET op_ErrorMessage	= 'Start: Update IsProcessed is done for FPS_RawTrans.StagingRawTransaction';  
-    SELECT op_ErrorCode;
-    # UPDATE IsProcessed = 1
-	IF op_ErrorCode = 0 THEN		
-		UPDATE 	FPS_RawTrans.StagingRawTransaction AS st
+	UPDATE 	FPS_RawTrans.StagingRawTransaction AS st
 				, Temp_Transaction AS ts
-		SET		st.IsProcessed = 1
-		WHERE	st.StagingTransID = ts.StagingTransID
-				AND st.IsProcessed = 0;
-	END IF;
-    
-	SET op_ErrorCode	= 0;
-	SET op_ErrorMessage	= 'Process Successfully';  
+	SET		st.IsProcessed = 1
+	WHERE	st.StagingTransID = ts.StagingTransID
+			AND st.IsProcessed = 0;	
          
 END$$
 
