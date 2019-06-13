@@ -19,13 +19,13 @@ BEGIN
 	DECLARE XpathRow VARCHAR(255);
     
     DROP TABLE IF EXISTS Temp_RawTransaction;
-
+    
 	CREATE TEMPORARY TABLE Temp_RawTransaction (
 	  DeviceCode 		VARCHAR(32) 					NOT NULL
       , LoginName 		VARCHAR(50) CHARACTER SET UTF8	NOT NULL 		COMMENT 'NVARCHAR'
       , SubscriberName 	VARCHAR(30) 					NOT NULL
       , TransDate 		DATETIME						NOT NULL
-      , IP 				VARCHAR(20)						NULL
+      , IP 				VARCHAR(50)						NULL
       , PluginID 		BIGINT(20) 						NULL
       , DeviceStatus 	TINYINT(4) 						NULL 			COMMENT 'Old, New or Retrieve'
       , URL 			VARCHAR(250) 					NULL

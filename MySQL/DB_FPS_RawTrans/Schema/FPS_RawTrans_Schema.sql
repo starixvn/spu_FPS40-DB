@@ -15,7 +15,7 @@ CREATE TABLE FPS_RawTrans.RawTransaction (
 	, SubscriberName	VARCHAR(30) 					NOT NULL
 	, TransDate			DATETIME 						NOT NULL
 	, CreatedDate		DATETIME 						NOT NULL	COMMENT 'Date Only'
-	, IP				VARCHAR(20) 					NULL
+	, IP				VARCHAR(50) 					NULL
 	, PluginID			BIGINT 							NULL
 	, DeviceStatus		TINYINT 						NOT NULL	COMMENT 'Old, New or Retrieve'
 	, URL				VARCHAR(250) 					NULL

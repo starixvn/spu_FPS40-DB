@@ -309,4 +309,6 @@ BEGIN
 END$$
 
 DELIMITER ;
+GRANT EXECUTE ON PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction TO 'fpsnet'@'%';
+FLUSH PRIVILEGES;
 
