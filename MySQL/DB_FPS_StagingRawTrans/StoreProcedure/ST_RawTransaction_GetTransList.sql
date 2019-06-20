@@ -9,13 +9,13 @@
 */
 
 DELIMITER $$
-CREATE PROCEDURE FPS_StagingRawTrans.ST_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1))
+CREATE PROCEDURE FPS_StagingRawTrans.ST_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1), IN ip_NoOfTickets INT)
 BEGIN
   
     # RETURN Transaction List
     SELECT	st.StagingTransID	
-			, st.st.DeviceCode
-			, st.st.LoginName
+			, st.DeviceCode
+			, st.LoginName
 			, st.SubscriberName
 			, st.TransDate
 			, st.CreatedDate
@@ -27,7 +27,8 @@ BEGIN
 			, st.UserAgent
 			, st.CapturedData
 	FROM 	FPS_StagingRawTrans.RawTransaction AS st
-	WHERE	st.IsProcessed = ip_IsProcessed;
+	WHERE	st.IsProcessed = ip_IsProcessed
+    LIMIT	ip_NoOfTickets;
 
 END$$
 DELIMITER ;

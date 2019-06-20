@@ -36,8 +36,8 @@ BEGIN
 		,	ActionResult		VARCHAR(100)
 		,	UserAgent			VARCHAR(500)
         ,	UserAgentCode		VARCHAR(32)
-        ,	BrowserName			VARCHAR(20)
-        ,	OSName				VARCHAR(20)
+        ,	BrowserName			VARCHAR(100)
+        ,	OSName				VARCHAR(100)
 		,	Flagged				INT
         ,	SubscriberID		INT        
         ,	IsDeposit			INT
@@ -54,8 +54,8 @@ BEGIN
     ( 
 			UserAgent		VARCHAR(500)
         ,	UserAgentCode	VARCHAR(32)
-        ,	BrowserName		VARCHAR(20)
-        ,	OSName			VARCHAR(20)
+        ,	BrowserName		VARCHAR(100)
+        ,	OSName			VARCHAR(100)
         ,   CreatedDate		DATETIME		COMMENT 'Date Only'
 	);
 	
@@ -307,8 +307,6 @@ BEGIN
 			AND st.IsProcessed = 0;	
          
 END$$
-
 DELIMITER ;
-GRANT EXECUTE ON PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction TO 'fpsnet'@'%';
-FLUSH PRIVILEGES;
+
 

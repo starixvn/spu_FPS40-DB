@@ -43,8 +43,8 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, CustID			BIGINT								NULL
 		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
 		, Username2			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, RoleID			TINYINT								NULL
-		, CurrencyID		TINYINT								NULL
+		, RoleID			TINYINT(1)								NULL
+		, CurrencyID		TINYINT(2)								NULL
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL				
 		, CreatedDate		DATETIME							NOT NULL      
         
@@ -66,10 +66,10 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, IP				BIGINT								NULL
         , IPRangeID			INT									NULL
 		, PluginID			BIGINT								NULL
-		, DeviceStatus		TINYINT								NULL		COMMENT 'new, old, retrieve'	NOT	NULL
-		, Flagged			TINYINT								NULL		COMMENT 'captcha & browserless'
+		, DeviceStatus		TINYINT(1)							NULL		COMMENT 'new, old, retrieve'	NOT	NULL
+		, Flagged			TINYINT(2)							NULL		COMMENT 'captcha & browserless'
 		, SubURLID			SMALLINT							NULL
-		, ActionResultID	TINYINT								NULL
+		, ActionResultID	TINYINT(2)							NULL
 		, UserAgentID		INT									NULL
         , StagingTransID	BIGINT			UNIQUE				NOT NULL
         
@@ -81,26 +81,24 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.OS(
-		OSID			TINYINT			AUTO_INCREMENT			NOT NULL
-		, OSName		VARCHAR(20)								NULL
-        , CreatedDate	DATETIME								NOT NULL
+		OSID			TINYINT(2)			AUTO_INCREMENT			NOT NULL
+		, OSName		VARCHAR(100)								NULL
+        , CreatedDate	DATETIME									NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID(OSID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
-
-
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.Browser(
-		BrowserID			TINYINT			AUTO_INCREMENT	NOT NULL
-		, BrowserName		VARCHAR(50)						NOT NULL
-        , CreatedDate		DATETIME						NOT NULL
+		BrowserID			TINYINT(2)			AUTO_INCREMENT	NOT NULL
+		, BrowserName		VARCHAR(100)						NOT NULL
+        , CreatedDate		DATETIME							NOT NULL
         
         , PRIMARY KEY 	PK_Browser_BrowserID(BrowserID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
-		ActionResultID			TINYINT			AUTO_INCREMENT
+		ActionResultID			TINYINT(2)			AUTO_INCREMENT
 		, ActionResultKey		VARCHAR(100)	CHARACTER SET utf8	NOT NULL
         , Status				TINYINT(1)							NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
         , CreatedDate			DATETIME							NOT NULL	COMMENT 'Date Only'
@@ -124,8 +122,8 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		IPRangeID		INT				AUTO_INCREMENT	NOT NULL
 		, FromIP		BIGINT							NOT NULL
         , ToIP			BIGINT							NOT NULL
-        , CountryCode	BIGINT							NULL
-        , CountryName	VARCHAR(64)						NULL
+        , CountryCode	VARCHAR(10)						NULL
+        , CountryName	VARCHAR(80)						NULL
         , Region		VARCHAR(128)					NULL
         , City			VARCHAR(50)						NULL
         , ISPName		VARCHAR(256)					NULL
@@ -139,8 +137,8 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		UserAgentID		INT				AUTO_INCREMENT	NOT NULL
 		, UserAgent		VARCHAR(500)					NOT NULL
 		, UserAgentCode	VARCHAR(32)						NOT NULL
-        , BrowserID		TINYINT(1)						NOT NULL
-        , OSID			TINYINT(1)						NULL
+        , BrowserID		TINYINT(2)						NOT NULL
+        , OSID			TINYINT(2)						NULL
         
         , PRIMARY KEY	PK_UserAgent_UserAgentID(UserAgentID)
         , INDEX			IX_UserAgent_UserAgentCode(UserAgentCode)
