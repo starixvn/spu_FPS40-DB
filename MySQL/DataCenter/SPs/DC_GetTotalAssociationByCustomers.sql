@@ -10,8 +10,6 @@ BEGIN
 	SET @sql = CONCAT("INSERT INTO tmp_CustId (custId) VALUES ('", REPLACE(custIds, ",", "'),('"),"');");
 	PREPARE stmt1 from @sql;
 	EXECUTE stmt1;
-	SELECT DISTINCT (custId) 
-		FROM tmp_CustId;
         
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
 	
