@@ -15,6 +15,7 @@ BEGIN
     # RETURN Transaction List
     SELECT	st.StagingTransID	
 			, st.DeviceCode
+            , st.FingeringCode
 			, st.LoginName
 			, st.SubscriberName
 			, st.TransDate

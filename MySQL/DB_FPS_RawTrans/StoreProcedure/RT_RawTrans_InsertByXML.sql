@@ -22,6 +22,7 @@ BEGIN
     
 	CREATE TEMPORARY TABLE Temp_RawTransaction (
 	  DeviceCode 		VARCHAR(32) 					NOT NULL
+      , FingeringCode	VARCHAR(5000)					NOT NULL
       , LoginName 		VARCHAR(50) CHARACTER SET UTF8	NOT NULL 		COMMENT 'NVARCHAR'
       , SubscriberName 	VARCHAR(30) 					NOT NULL
       , TransDate 		DATETIME						NOT NULL
@@ -45,6 +46,7 @@ BEGIN
             
 		INSERT INTO Temp_RawTransaction
 		(	DeviceCode
+			, FingeringCode
             , LoginName
             , SubscriberName
             , TransDate
@@ -59,6 +61,7 @@ BEGIN
 		VALUES
 		( 
 		 EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
+         , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingeringCode'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::LoginName'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::TransDate'))
@@ -75,6 +78,7 @@ BEGIN
     
     INSERT INTO FPS_RawTrans.RawTransaction
 	(	DeviceCode
+		, FingeringCode
 		, LoginName
 		, SubscriberName
 		, TransDate
@@ -89,6 +93,7 @@ BEGIN
 	)
 	SELECT
 			rt.DeviceCode
+            , rt.FingeringCode
 			, rt.LoginName
 			, rt.SubscriberName
 			, rt.TransDate

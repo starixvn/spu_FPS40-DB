@@ -13,25 +13,41 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.Device(
 		DeviceID			BIGINT 		AUTO_INCREMENT
 		, DeviceCode		VARCHAR(32) 				NOT NULL
-		, UserAgentID		INT							NULL
-		, PluginID			BIGINT						NULL
 		, CreatedDate		DATETIME					NOT NULL
 		, LastAccessDate	DATETIME					NULL		COMMENT 'Date Only'	NOT NULL
         
-        , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
+        , PRIMARY KEY	PK_Device_DeviceID(DeviceID, DeviceCode)
         , UNIQUE INDEX	UIX_Device_DeviceCode(DeviceCode)
         , INDEX			IX_Device_LastAccessDate(LastAccessDate)
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+
+
+# ======Device=============================================
+	CREATE TABLE FPS_DataCenter.DeviceDetail(
+		DeviceDetailID		BIGINT 			AUTO_INCREMENT
+        , FingeringCode		VARCHAR(5000)
+		, DeviceID			VARCHAR(32) 					NOT NULL
+        , UserAgentID		INT								NULL
+		, PluginID			BIGINT							NULL
+        
+        , PRIMARY KEY	PK_DeviceDetail_DeviceID(DeviceDetailID)        
+        , INDEX			IX_DeviceDetail_DeviceCode(DeviceID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
     
 # =======Association============================================
 	CREATE TABLE FPS_DataCenter.Association(
-		DeviceID		BIGINT		NOT NULL
-		, AccountID		BIGINT		NOT NULL
-		, SubscriberID	SMALLINT	NOT NULL
-		, CreatedDate	DATETIME	NOT NULL
+		AssociationID		BIGINT 		AUTO_INCREMENT
+		, DeviceID			BIGINT		NOT NULL
+		, AccountID			BIGINT		NOT NULL
+		, SubscriberID		SMALLINT	NOT NULL
+		, CreatedDate		DATETIME	NOT NULL
+		, SyncGraphDB		TINYINT(1)	NOT NULL	COMMENT '0: NOT SENT TO GraphDB, 1: SENT'
         
+        , PRIMARY KEY	PK_Association_AssociationID(AssociationID)
         , INDEX	IX_Association_SubscriberID_AccountID(SubscriberID, AccountID)
-        , INDEX IX_Association_SubscriberID_DeviceID(SubscriberID, DeviceID) 
+        , INDEX IX_Association_SubscriberID_DeviceID(SubscriberID, DeviceID)
+        , INDEX IX_Association_SyncGraphDB(SyncGraphDB)
+        
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Account============================================
@@ -57,7 +73,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # =======Transactions============================================
 	CREATE TABLE FPS_DataCenter.`Transaction`(
 		TransID				BIGINT			AUTO_INCREMENT		NOT NULL
-		, DeviceID			BIGINT								NOT NULL
+		, DeviceDetailsID	BIGINT								NOT NULL
 		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
 		, AccountID			BIGINT								NOT NULL
 		, SubscriberID		SMALLINT							NULL	

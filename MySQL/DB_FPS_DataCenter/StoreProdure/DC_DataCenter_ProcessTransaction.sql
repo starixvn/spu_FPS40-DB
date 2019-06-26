@@ -23,27 +23,28 @@ BEGIN
 	
 	CREATE TEMPORARY TABLE Temp_Transaction
     ( 
-		StagingTransID			BIGINT
-		,	DeviceCode			VARCHAR(32) 
-		,	LoginName			VARCHAR(50) CHARACTER SET utf8
-		,	SubscriberName		VARCHAR(30) 
-		,	TransDate			DATETIME 
-		,	CreatedDate			DATETIME
-		,	IP					BIGINT
-		,	PluginID			BIGINT
-		,	DeviceStatus		TINYINT
-		,	URL					VARCHAR(250)
-		,	ActionResult		VARCHAR(100)
-		,	UserAgent			VARCHAR(500)
-        ,	UserAgentCode		VARCHAR(32)
-        ,	BrowserName			VARCHAR(100)
-        ,	OSName				VARCHAR(100)
-		,	Flagged				INT
-        ,	SubscriberID		INT        
-        ,	IsDeposit			INT
-        ,	SubScriberPrefix	VARCHAR(30)
-        ,	DeviceID			INT
-        ,	AccountID			INT
+		StagingTransID		BIGINT
+		, DeviceCode		VARCHAR(32) 
+        , FingeringCode		VARCHAR(5000)
+		, LoginName			VARCHAR(50) CHARACTER SET utf8
+		, SubscriberName	VARCHAR(30) 
+		, TransDate			DATETIME 
+		, CreatedDate		DATETIME
+		, IP				BIGINT
+		, PluginID			BIGINT
+		, DeviceStatus		TINYINT
+		, URL				VARCHAR(250)
+		, ActionResult		VARCHAR(100)
+		, UserAgent			VARCHAR(500)
+        , UserAgentCode		VARCHAR(32)
+        , BrowserName		VARCHAR(100)
+        , OSName			VARCHAR(100)
+		, Flagged			INT
+        , SubscriberID		INT        
+        , IsDeposit			INT
+        , SubScriberPrefix	VARCHAR(30)
+        , DeviceID			INT
+        , AccountID			INT
 	);
     
 	   
@@ -52,13 +53,27 @@ BEGIN
 	
 	CREATE TEMPORARY TABLE Temp_NewUserAgent
     ( 
-			UserAgent		VARCHAR(500)
-        ,	UserAgentCode	VARCHAR(32)
-        ,	BrowserName		VARCHAR(100)
-        ,	OSName			VARCHAR(100)
-        ,   CreatedDate		DATETIME		COMMENT 'Date Only'
+		UserAgent		VARCHAR(500)
+        , UserAgentCode	VARCHAR(32)
+        , BrowserName		VARCHAR(100)
+        , OSName			VARCHAR(100)
+        , CreatedDate		DATETIME		COMMENT 'Date Only'
 	);
 	
+    #========================================================================================================================
+    DROP TABLE IF EXISTS Temp_NewCodeDevice;
+	
+	CREATE TEMPORARY TABLE Temp_NewCodeDevice
+    ( 
+		DeviceCode			VARCHAR(500)
+        , DeviceID			BIGINT
+        , AccountID			BIGINT
+        , FingeringCode		VARCHAR(5000)        
+        , UserAgentID		INT
+        , PluginID			BIGINT
+        , CreatedDate		DATETIME
+        , LastAccessDate	DATETIME
+	);
     
     #========1.GET DATA FROM XML TO TEMP TABLE=================================================================================
     SET RowCount = EXTRACTVALUE(ip_TransXml,'count(//root/transaction)');      
@@ -169,28 +184,7 @@ BEGIN
 				ON ts.OSName = os.OSName
 	INNER JOIN	FPS_DataCenter.Browser AS br
 				ON ts.BrowserName = br.BrowserName;
-    
-    #======INSERT: DEVICE===========================================================================================================    
-    INSERT INTO Device(DeviceCode, UserAgentID, PluginID, CreatedDate, LastAccessDate)    
-	SELECT 		ts.DeviceCode
-				, MAX(ua.UserAgentID) AS UserAgentID
-                , MAX(ts.PluginID)
-                , MIN(ts.CreatedDate) AS CreatedDate
-                , MAX(ts.CreatedDate) AS LastAccessDate
-    FROM		Temp_Transaction AS ts	
-	INNER JOIN	FPS_DataCenter.UserAgent AS ua
-				ON ts.UserAgentCode = ua.UserAgentCode
-	LEFT JOIN	FPS_DataCenter.Device AS dv
-				ON ts.DeviceCode = dv.DeviceCode
-	WHERE		dv.DeviceCode IS NULL
-    GROUP BY	ts.DeviceCode;    
-    
-	#======UPDATE: Temp_Transaction.DeviceID==========================================================================================    
-    UPDATE 	Temp_Transaction AS ts
-			, FPS_DataCenter.Device AS dv
-	SET		ts.DeviceID		= dv.DeviceID
-    WHERE	ts.DeviceCode	= dv.DeviceCode;
-    
+                
     #=====INSERT: NEW ACCOUNT==========================================================================================================    
     INSERT INTO FPS_DataCenter.Account
 	(
@@ -235,15 +229,61 @@ BEGIN
 				OR ts.LoginName = ac.UserName
 				OR ts.LoginName = ac.Username2
 				OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2
-			);	
-		
+			);			
+ 	                
+	#========PROCESS DEVICEID==============================================
+    #========GET Deivce with New code======================================
+    INSERT INTO Temp_NewCodeDevice(DeviceCode ,DeviceID , FingeringCode ,UserAgentID ,PluginID ,CreatedDate ,LastAccessDate)
+    SELECT		ts.DeviceCode
+				, ts.DeviceID
+                , ts.FingeringCode
+                , MIN(au.UserAgentID)	AS UserAgentID
+                , MIN(ts.PluginID) 		AS PluginID
+                , MIN(ts.CreatedDate)	AS CreatedDate
+                , MAX(ts.CreatedDate)	AS LastAccessDate
+    FROM		Temp_Transaction AS ts
+    INNER JOIN	FPS_DataCenter.UserAgent AS au
+				ON ts.UserAgentCode = au.UserAgentCode
+	LEFT JOIN	FPS_DataCenter.Device AS dv
+				ON ts.DeviceCode = dv.DeviceCode
+	INNER JOIN	FPS_DataCenter.Association AS ass
+				ON ts.AccountID = ass.AccountID
+	LEFT JOIN	FPS_DataCenter.DeviceDetail AS dd
+				ON ass.DeviceID = dd.DeviceID
+                AND ts.FingeringCode = dd.FingeringCode
+	WHERE		dv.DeviceCode IS NULL
+    GROUP BY	ts.DeviceCode
+				, ts.DeviceID
+                , ts.FingeringCode;
+	
+    INSERT INTO FPS_DataCenter.Device(DeviceCode,CreatedDate ,LastAccessDate)
+    SELECT		DeviceCode
+				, MIN(CreatedDate) AS CreatedDate
+                , MAX(LastAccessDate) AS LastAccessDate
+    FROM		Temp_NewCodeDevice AS nd
+    WHERE		nd.DeviceID IS NULL
+    GROUP BY	DeviceCode;
+    
+    INSERT INTO FPS_DataCenter.DeviceDetail(FingeringCode, DeviceID, UserAgentID, PluginID)
+    SELECT		FingeringCode
+				, dd.DeviceID
+                , MIN(UserAgentID)
+                , MIN(PluginID)
+	FROM		Temp_NewCodeDevice AS nd
+    INNER JOIN	FPS_DataCenter.Device AS dd
+				ON nd.DeviceCode = dd.DeviceCode
+	WHERE		nd.DeviceID is NULL
+	GROUP BY	nd.FingeringCode, dd.DeviceID;
+    
+    
  
 	#========INSERT: Associations--==========================================================================================    
-    INSERT INTO FPS_DataCenter.Association(DeviceID, AccountID, SubscriberID, CreatedDate)
+    INSERT INTO FPS_DataCenter.Association(DeviceID, AccountID, SubscriberID, CreatedDate, SyncGraphDB)
     SELECT		ts.DeviceID
 				, ts.AccountID
 				, ts.SubscriberID
                 , MIN(ts.CreatedDate)
+                , 0 AS SyncGraphDB
     FROM		Temp_Transaction AS ts
     LEFT JOIN	FPS_DataCenter.Association AS ac
 				ON	(ts.SubscriberID	= ac.SubscriberID
@@ -286,7 +326,7 @@ BEGIN
 	FROM		Temp_Transaction AS ts
     INNER JOIN	FPS_DataCenter.SubscriberURL AS su
 				ON ts.URL = su.URL AND ts.SubscriberID = su.SubscriberID
-	INNER JOIN	UserAgent AS ua
+	INNER JOIN	FPS_DataCenter.UserAgent AS ua
 				ON ts.UserAgentCode = ua.UserAgentCode
 	INNER JOIN	FPS_DataCenter.Device AS dv
 				ON ts.DeviceCode = dv.DeviceCode
