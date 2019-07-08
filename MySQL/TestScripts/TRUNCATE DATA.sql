@@ -1,6 +1,6 @@
-TRUNCATE TABLE FPS_StagingRawTrans.RawTransaction;
+#TRUNCATE TABLE FPS_StagingRawTrans.RawTransaction;
 
-TRUNCATE TABLE FPS_Admin.Subscriber;
+#TRUNCATE TABLE FPS_Admin.Subscriber;
 
 TRUNCATE TABLE FPS_DataCenter.Account;
 
@@ -26,7 +26,7 @@ TRUNCATE TABLE FPS_DataCenter.EvidenceType;
 
 TRUNCATE TABLE FPS_DataCenter.Exception;
 
-TRUNCATE TABLE FPS_DataCenter.IPRange;
+TRUNCATE TABLE FPS_DataCenter.IPRangeLocation;
 
 TRUNCATE TABLE FPS_DataCenter.LogType;
 

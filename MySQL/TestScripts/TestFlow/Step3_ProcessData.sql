@@ -1,0 +1,27 @@
+CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction(
+'<root>
+		<transaction
+		StagingTransID="1234"
+		DeviceCode="NHFGCBEUFHRMSHFKEJCD1"
+		DeviceCodeStatus="1" 
+		FingeringCode="e0f49101796e1d1d109cc9122b7bce34df1b435f;174518b467fe195603901fc36eae418f" 
+        FingeringMoreInfo="eyJuYSI6Ik4vQSIsImRldmljZUNvZGUiOiJlMGY0OTEwMTc5NmUxZDFkMTA5Y2M5MTIyYjdiY2UzNGRmMWI0MzVmOzE3NDUxOGI0NjdmZTE5NTYwMzkwMWZjMzZlYWU0MThmIiwiYXBwVmVyc2lvbiI6IjUuMCAoV2luZG93cykiLCJ0aW1lWm9uZSI6Ii00ODAiLCJ1c2VyQWdlbnQiOiJNb3ppbGxhLzUuMCAoV2luZG93cyBOVCA2LjE7IFdPVzY0OyBydjo0NS4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzQ1LjAiLCJzY3JlZW4iOnsid2lkdGgiOjE2MDAsImhlaWdodCI6OTAwLCJjb2xvckRlcHRoIjoyNH0sImRldmljZUlkIjoiZDI0NGZmNGEyZTM2NDA4ZmExYmI3MjRlMGNlNjcyY2QiLCJocmVmIjoiaHR0cDovL3d3dy5tYXhiZXQuY29tL0RlZmF1bHQuYXNweCIsImNhcHR1cmVkRGF0ZSI6IjYzNjIyMDAzMDMxNzMyMzYwOSJ9"
+        LoginName="Player001"
+        SubscriberName="FPS"
+        TransDate="1561963996"
+        CreatedDate="1561953600"
+		IP="123424"
+        IPType = "1"
+		PluginID="42970728"
+		URL="https://fpsnew.com"
+		ActionResult="login"
+		UserAgent="HDHDHDNDHHKALLKDSLDSJDJSDJSD"
+		UserAgentCode="HDHDHDNDHHKALLKDSLDSJDJSDJSD"
+		BrowserName="Mozilla"
+		OSName="Android"
+		Flagged="0"		   
+	/>
+</root>');
+
+#SELECT * FROM FPS_StagingRawTrans.RawTransaction;
+SELECT * FROM FPS_DataCenter.Device;

@@ -13,6 +13,7 @@ SELECT * FROM FPS_DataCenter.OS;
 SELECT * FROM FPS_DataCenter.SubscriberURL;
 
 SELECT * FROM FPS_DataCenter.Device;
+SELECT * FROM FPS_DataCenter.DeviceDetail;
 
 SELECT * FROM FPS_DataCenter.Transaction;
 

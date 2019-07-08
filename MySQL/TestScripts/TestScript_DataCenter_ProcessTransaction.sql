@@ -1,19 +1,23 @@
-CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction('
+	
+	CALL FPS_DataCenter.DC_DataCenter_ProcessTransaction('
 		<root>
-		<transaction StagingTransID="3"
+		<transaction StagingTransID="1"
 					DeviceCode="DV010001"
+                    FingeringCode=
                     LoginName="LoginName010004" 
                     SubscriberName="Subcriber02" 
                     TransDate="2019-05-29 00:05:37"
                     CreatedDate="2019-05-29"
-                    IP="15432" PluginID="1" 
+                    IP="15432"
+                    PluginID="1" 
                     DeviceStatus="1"
                     URL="http//bcl.com" 
 					ActionResult="Login Successfully"
                     UserAgent="BCL tap n" 
                     UserAgentCode = "A1B1C1" 
                     BrowserName = "Mozilla"
+					OSName="Window"
                     Flagged="0"
-                    OSName="Window"/>
+                    />
 		</root>
-		', @op_ErrorCode, @op_ErrorMessage)
+		')

@@ -8,28 +8,30 @@ Revisions:
 Reviewer: 
 */
 
-CREATE DATABASE FPS_StagingRawTrans;
+CREATE DATABASE IF NOT EXISTS FPS_StagingRawTrans;
 
+DROP TABLE IF EXISTS FPS_StagingRawTrans.RawTransaction;
 CREATE TABLE FPS_StagingRawTrans.RawTransaction(	
-	DeviceCode		VARCHAR(32) 						NULL
-    , FingeringCode		VARCHAR(5000)					NULL
-	, LoginName			VARCHAR(50) CHARACTER SET utf8	NOT NULL 				COMMENT 'NVARCHAR'
-	, SubscriberName	VARCHAR(30)						NOT NULL
-	, TransDate			DATETIME 						NOT NULL
-	, CreatedDate		DATETIME 						NOT NULL				COMMENT 'Date Only'
-	, IP				VARCHAR(50) 					NULL
-	, PluginID			BIGINT							NULL
-	, DeviceStatus		TINYINT							NULL  				COMMENT 'Old, New or Retrieve'
-	, URL				VARCHAR(250)					NULL
-	, ActionResult		VARCHAR(100)					NULL
-	, UserAgent			VARCHAR(500)					NULL	
-	, CapturedData		VARCHAR(5000) 					NULL
+	LoginName					VARCHAR(50) CHARACTER SET utf8	NOT NULL	COMMENT 'NVARCHAR'
+	, SubscriberName			VARCHAR(50) 					NOT NULL
+	, TransDate					BIGINT	 						NOT NULL
+	, CreatedDate				BIGINT 							NOT NULL	COMMENT 'Date Only'
+	, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
+	, DeviceCodeStatus			TINYINT 						NULL		COMMENT '0: Old, 1: New'
+	, FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'
+	, FingeringMoreInfo			TEXT		 					NULL
+	, UserAgent					VARCHAR(500) 					NULL
+	, IP						VARCHAR(50) 					NULL
+	, PluginID					BIGINT 							NULL
+	, URL						VARCHAR(250) 					NULL
+	, ActionResult				VARCHAR(100) 					NULL
     
     , IsProcessed		TINYINT(1)						NOT NULL	DEFAULT '0'
     , StagingTransID	BIGINT		AUTO_INCREMENT		NOT NULL	
 
 	, PRIMARY KEY PK_RawTransaction_StaingTransID(StagingTransID)
 	, INDEX IX_RawTransaction_IsProcessed(IsProcessed)
-	, INDEX IX_RawTransaction_CreatedDate(CreatedDate)
-	, INDEX IX_RawTransaction_SubscriberName(SubscriberName) 
+	, INDEX IX_RawTransaction_CreatedDate(CreatedDate, SubscriberName)
+	, INDEX IX_RawTransaction_SubscriberName(SubscriberName)
+    
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;

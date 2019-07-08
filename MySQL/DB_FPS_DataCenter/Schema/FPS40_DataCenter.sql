@@ -8,30 +8,42 @@ Reviewer:
 */
 
 CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
-
-# ======Device=============================================
+# ======Device============================================
 	CREATE TABLE FPS_DataCenter.Device(
-		DeviceID			BIGINT 		AUTO_INCREMENT
-		, DeviceCode		VARCHAR(32) 				NOT NULL
-		, CreatedDate		DATETIME					NOT NULL
-		, LastAccessDate	DATETIME					NULL		COMMENT 'Date Only'	NOT NULL
+		DeviceID				BIGINT 			AUTO_INCREMENT
+		, FirstFingeringCode	VARCHAR(5000) 	NULL
+		, FirstDeviceCode		VARCHAR(32) 	NULL
+        , FristAccessAccountID	BIGINT			NULL			COMMENT ' Date Only'
+        , CreatedDate			BIGINT			NULL			
         
-        , PRIMARY KEY	PK_Device_DeviceID(DeviceID, DeviceCode)
-        , UNIQUE INDEX	UIX_Device_DeviceCode(DeviceCode)
-        , INDEX			IX_Device_LastAccessDate(LastAccessDate)
+        , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
+        , INDEX			IX_Device_CreatedDate(CreatedDate)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
-
 # ======Device=============================================
-	CREATE TABLE FPS_DataCenter.DeviceDetail(
-		DeviceDetailID		BIGINT 			AUTO_INCREMENT
+	CREATE TABLE FPS_DataCenter.DeviceCode(
+		DeviceID			BIGINT 
+		, DeviceCode		VARCHAR(32) 				NOT NULL
+		, CreatedDate		BIGINT						NOT NULL
+        
+        , PRIMARY KEY	PK_DeviceCode_DeviceCode(DeviceCode)
+        , INDEX			IX_DeviceCode_CreatedDate(CreatedDate)
+        , INDEX			IX_DeviceCode_DeviceID(DeviceID)
+        
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+     
+# ======DeviceDetail=============================================
+	CREATE TABLE FPS_DataCenter.DeviceFingering(
+		DeviceFingeringID	BIGINT 			AUTO_INCREMENT
+        , DeviceID			VARCHAR(32) 					NOT NULL
         , FingeringCode		VARCHAR(5000)
-		, DeviceID			VARCHAR(32) 					NOT NULL
+		, FingeringMoreInfo	TEXT
         , UserAgentID		INT								NULL
 		, PluginID			BIGINT							NULL
+        , CreatedDate		BIGINT
         
-        , PRIMARY KEY	PK_DeviceDetail_DeviceID(DeviceDetailID)        
-        , INDEX			IX_DeviceDetail_DeviceCode(DeviceID)
+        , PRIMARY KEY	PK_DeviceFingering_DeviceFingeringID(DeviceFingeringID)        
+        , INDEX			IX_DeviceFingering_DeviceCode(DeviceID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
     
 # =======Association============================================
@@ -40,7 +52,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, DeviceID			BIGINT		NOT NULL
 		, AccountID			BIGINT		NOT NULL
 		, SubscriberID		SMALLINT	NOT NULL
-		, CreatedDate		DATETIME	NOT NULL
+		, CreatedDate		BIGINT		NOT NULL
 		, SyncGraphDB		TINYINT(1)	NOT NULL	COMMENT '0: NOT SENT TO GraphDB, 1: SENT'
         
         , PRIMARY KEY	PK_Association_AssociationID(AssociationID)
@@ -62,7 +74,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, RoleID			TINYINT(1)								NULL
 		, CurrencyID		TINYINT(2)								NULL
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL				
-		, CreatedDate		DATETIME							NOT NULL      
+		, CreatedDate		BIGINT							NOT NULL      
         
         , PRIMARY KEY	PK_Account_AccountID(AccountID)        
         , INDEX			IX_Account_CustID(CustID)
@@ -73,14 +85,16 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # =======Transactions============================================
 	CREATE TABLE FPS_DataCenter.`Transaction`(
 		TransID				BIGINT			AUTO_INCREMENT		NOT NULL
-		, DeviceDetailsID	BIGINT								NOT NULL
+        , DeviceID			BIGINT								NULL
+        , DeviceCode		VARCHAR(32)							NULL
+		, DeviceFingeringID	BIGINT								NOT NULL
 		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
 		, AccountID			BIGINT								NOT NULL
 		, SubscriberID		SMALLINT							NULL	
-		, TransDate			DATETIME							NOT	NULL
-		, CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL
+		, TransDate			BIGINT							NOT	NULL
+		, CreatedDate		BIGINT							NULL		COMMENT 'Date Only'	NOT	NULL
 		, IP				BIGINT								NULL
-        , IPRangeID			INT									NULL
+        , IPRangeLocationID	BIGINT									NULL
 		, PluginID			BIGINT								NULL
 		, DeviceStatus		TINYINT(1)							NULL		COMMENT 'new, old, retrieve'	NOT	NULL
 		, Flagged			TINYINT(2)							NULL		COMMENT 'captcha & browserless'
@@ -99,7 +113,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.OS(
 		OSID			TINYINT(2)			AUTO_INCREMENT			NOT NULL
 		, OSName		VARCHAR(100)								NULL
-        , CreatedDate	DATETIME									NOT NULL
+        , CreatedDate	BIGINT									NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID(OSID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -107,7 +121,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.Browser(
 		BrowserID			TINYINT(2)			AUTO_INCREMENT	NOT NULL
 		, BrowserName		VARCHAR(100)						NOT NULL
-        , CreatedDate		DATETIME							NOT NULL
+        , CreatedDate		BIGINT							NOT NULL
         
         , PRIMARY KEY 	PK_Browser_BrowserID(BrowserID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -117,7 +131,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		ActionResultID			TINYINT(2)			AUTO_INCREMENT
 		, ActionResultKey		VARCHAR(100)	CHARACTER SET utf8	NOT NULL
         , Status				TINYINT(1)							NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
-        , CreatedDate			DATETIME							NOT NULL	COMMENT 'Date Only'
+        , CreatedDate			BIGINT								NOT NULL	COMMENT 'Date Only'
         
         , PRIMARY KEY 	PK_ActionResult_ActionResultID(ActionResultID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -128,24 +142,28 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		SubscriberURLID			SMALLINT		AUTO_INCREMENT	NOT NULL
 		, URL					VARCHAR(250)					NULL
         , SubscriberID			SMALLINT						NULL
-        , CreatedDate			DATETIME						NOT NULL
+        , CreatedDate			BIGINT						NOT NULL
         
         , PRIMARY KEY 	PK_SubscriberURL_SubscriberURLID(SubscriberURLID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
-	CREATE TABLE FPS_DataCenter.IPRange(
-		IPRangeID		INT				AUTO_INCREMENT	NOT NULL
-		, FromIP		BIGINT							NOT NULL
-        , ToIP			BIGINT							NOT NULL
-        , CountryCode	VARCHAR(10)						NULL
-        , CountryName	VARCHAR(80)						NULL
-        , Region		VARCHAR(128)					NULL
-        , City			VARCHAR(50)						NULL
-        , ISPName		VARCHAR(256)					NULL
-        , Status		TINYINT(1)        							COMMENT '0: Inactive; 1: Active'
+	CREATE TABLE FPS_DataCenter.IPRangeLocation(
+		IPRangeLocationID		INT				AUTO_INCREMENT	NOT NULL
+        , IPRangeLocationCode 	VARCHAR(64)	
+        , IPType				TINYINT							NOT NULL	COMMENT '0: IPV4, 1: IPV6'
+		, FromIP				BIGINT							NOT NULL
+        , ToIP					BIGINT							NOT NULL
+        , CountryCode			VARCHAR(10)						NULL
+        , CountryName			VARCHAR(80)						NULL
+        , Region				VARCHAR(128)					NULL
+        , City					VARCHAR(50)						NULL
+        , ISPName				VARCHAR(256)					NULL
+        , Status				TINYINT(1)        				COMMENT '0: Inactive; 1: Active'
+        , CreatedDate			BIGINT
         
-        , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeID)
+        , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeLocationID)
+        , INDEX			IX_IPRangeLocation_FromIP_ToIP(IPType,FromIP,ToIP)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======UserAgent============================================
@@ -166,7 +184,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, EvidenceGroupName		VARCHAR(50)							NOT NULL
 		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8	NULL
 		, OrderNo				SMALLINT							NULL
-		, CreatedDate			DATETIME							NOT NULL
+		, CreatedDate			BIGINT							NOT NULL
 		, CreatedBy				INT									NOT NULL
 		, IsActive				TINYINT(1)							NOT NULL
         
@@ -181,7 +199,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, EvidenceTypeName	VARCHAR(50)							NOT NULL
 		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET utf8	NULL
 		, OrderNo			SMALLINT							NOT NULL
-		, CreatedDate		DATETIME							NOT NULL
+		, CreatedDate		BIGINT							NOT NULL
 		, CreatedBy			INT									NOT NULL
 		, IsActive			TINYINT(1)							NOT NULL
         
@@ -201,7 +219,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, TargetLevel		TINYINT								NOT NULL
 		, CentralPointID	BIGINT								NOT NULL
 		, SubscriberID		INT									NOT NULL
-		, CreatedDate		DATETIME							NOT NULL
+		, CreatedDate		BIGINT							NOT NULL
 		, CreatedBy			INT									NOT NULL
 		, IsCreatedByMaster	TINYINT(1)							NOT NULL
 		, IsActive			TINYINT(1)							NOT NULL
@@ -217,7 +235,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, AccountID		BIGINT								NOT NULL
 		, SubscriberID	SMALLINT							NOT NULL
 		, Remark		VARCHAR(200)	CHARACTER SET utf8	NULL
-		, CreatedDate	DATETIME							NOT NULL
+		, CreatedDate	BIGINT							NOT NULL
 		, CreatedBy		INT									NOT NULL
 		, IsActive		TINYINT(1)							NOT NULL
         
@@ -240,13 +258,21 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, SPName		VARCHAR(100)						NULL
 		, SubscriberID	INT									NULL
 		, LogInfo		VARCHAR(500)	CHARACTER SET utf8	NULL
-		, CreatedDate	DATETIME							NULL
+		, CreatedDate	BIGINT							NULL
 		, CreatedBy		INT									NULL
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===================================================
 
-
+CREATE TABLE FPS_DataCenter.IPTableLog(
+	IPTableLogID			INT 		AUTO_INCREMENT
+	, IPType				TINYINT						COMMENT '0: Update IPV4 table IP2Location, 1: IPV6 Table IPV6Location'
+	, UpdatedDate			BIGINT
+	, IsNewUpdate			BIT							COMMENT	'0: old, 1: New'
+	
+    , PRIMARY KEY	PK_IPTableLog_IPTableLogID(IPTableLogID)
+	, INDEX IX_IPTableLog_IPType_Flag (IPType, IsNewUpdate)
+);
 # ===================================================
 
 
