@@ -11,7 +11,7 @@
 DELIMITER $$
 USE FPS_DataCenter$$
 
-CREATE PROCEDURE FPS_DataCenter.DC_IPTableLog_GetLastestUpdatedDate()
+CREATE PROCEDURE FPS_DataCenter.DC_IPTableLog_GetLatestUpdatedDate()
 BEGIN
 
 	SELECT	il.UpdatedDate 
