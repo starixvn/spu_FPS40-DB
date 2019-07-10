@@ -1,9 +1,19 @@
+/*
+	Created: 20190620@Harvey
+	Task : Get evidence for customer
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `DC_GetEvidencesByCustomers`;
+DROP procedure IF EXISTS `FPS_DC_GetEvidencesByCustomers`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `DC_GetEvidencesByCustomers` (in custIds LONGTEXT, in evidences LONGTEXT)
+CREATE PROCEDURE `FPS_DC_GetEvidencesByCustomers` (in custIds LONGTEXT, in evidences LONGTEXT)
 BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
@@ -40,5 +50,5 @@ END$$
 DELIMITER ;
 
 
--- CALL `FPS_DataCenter`.`DC_GetEvidencesByCustomers`('1234','');
+-- CALL `FPS_DataCenter`.`FPS_DC_GetEvidencesByCustomers`('1234','');
 

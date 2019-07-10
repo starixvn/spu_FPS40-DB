@@ -1,3 +1,14 @@
+/*
+	Created: 20190620@Harvey
+	Task : Split string
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
+
 USE `FPS_DataCenter`;
 DROP procedure IF EXISTS `SPU_SplitString`;
 

@@ -1,9 +1,19 @@
+/*
+	Created: 20190620@Harvey
+	Task : Get IBC info
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 USE FPS_DataCenter;
-DROP procedure IF EXISTS DC_UpdateCustomerInfo;
+DROP procedure IF EXISTS FPS_DC_UpdateCustomerInfo;
 
 DELIMITER $$
 USE FPS_DataCenter$$
-CREATE PROCEDURE DC_UpdateCustomerInfo (in custDataXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
+CREATE PROCEDURE FPS_DC_UpdateCustomerInfo (in custDataXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
 BEGIN
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount INT UNSIGNED;

@@ -1,9 +1,19 @@
+/*
+	Created: 20190620@Harvey
+	Task : Get Customer for updating IBC info
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `DC_GetNewCustomer`;
+DROP procedure IF EXISTS `FPS_DC_GetNewCustomer`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `DC_GetNewCustomer` (in ip_Size int)
+CREATE PROCEDURE `FPS_DC_GetNewCustomer` (in ip_Size int)
 BEGIN
 	   
     SELECT acc.AccountID

@@ -1,9 +1,19 @@
+/*
+	Created: 20190620@Harvey
+	Task : Prepare SP for API
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `DC_GetTotalAssociationByCustomers`;
+DROP procedure IF EXISTS `FPS_DC_GetTotalAssociationByCustomers`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `DC_GetTotalAssociationByCustomers` (in custIds LONGTEXT, in roleId TINYINT)
+CREATE PROCEDURE `FPS_DC_GetTotalAssociationByCustomers` (in custIds LONGTEXT, in roleId TINYINT)
 BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
@@ -29,4 +39,4 @@ END$$
 
 DELIMITER ;
 
--- CALL `FPS_DataCenter`.`DC_GetTotalAssociationByCustomers`('1234');
+-- CALL `FPS_DataCenter`.`FPS_DC_GetTotalAssociationByCustomers`('1234');
