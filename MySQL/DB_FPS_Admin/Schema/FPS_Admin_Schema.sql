@@ -29,6 +29,7 @@ CREATE TABLE FPS_Admin.UserSubscriber (
 ,	SubscriberID		INT			NOT NULL
 ,	CreatedDate			BIGINT	 	NULL
 ,	CreatedBy			INT			NULL
+,	PRIMARY KEY	`CIX_UserSubscriber_UserID_SubscriberID` (`UserID`,`SubscriberID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 CREATE TABLE FPS_Admin.LogType (
