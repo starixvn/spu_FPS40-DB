@@ -15,6 +15,13 @@ BEGIN
 		Param's Explanation (filtered by):
 	*/    
 
+	DECLARE currentTime DATETIME DEFAULT NOW();
+    DECLARE listSubForDelete VARCHAR(100);
+    
+    SELECT CONCAT_WS(',', GROUP_CONCAT(SubscriberID)) FROM UserSubscriber
+	WHERE userid = ip_userId
+    INTO listSubForDelete;
+
     DELETE FROM UserSubscriber WHERE UserID = ip_userId;
     INSERT INTO `FPS_Admin`.`UserLog`
 		(`LogTypeID`,
@@ -25,8 +32,8 @@ BEGIN
 		VALUES
 		(3,
 		'FPS_AD_InsertSubscriberByUser',
-		CONCAT('DELETE FROM UserSubscriber WHERE UserID = ', ip_userId),
-		NOW(),
+		CONCAT('DELETE UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: ', listSubForDelete),
+		currentTime,
 		ip_createdBy);
 
     
@@ -43,8 +50,8 @@ BEGIN
 		VALUES
 		(1,
 		'FPS_AD_InsertSubscriberByUser',
-		CONCAT('INSERT INTO UserSubscriber - list subscriber: Master sub'),
-		NOW(),
+		CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: Master Sub'),
+		currentTime,
 		ip_createdBy);
     ELSE		
 		DROP TEMPORARY TABLE IF EXISTS tmp_SubscriberId;
@@ -69,8 +76,8 @@ BEGIN
 		VALUES
 		(1,
 		'FPS_AD_InsertSubscriberByUser',
-		CONCAT('INSERT INTO UserSubscriber - list subscriber: ', ip_subscriberIds),
-		NOW(),
+        CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: ', ip_subscriberIds),
+		currentTime,
 		ip_createdBy);
     END IF;
 END$$
@@ -78,6 +85,6 @@ END$$
 DELIMITER ;
 
 
---  CALL `FPS_Admin`.`FPS_AD_InsertSubscriberByUser`(1,'', 2,8);
+--  CALL `FPS_Admin`.`FPS_AD_InsertSubscriberByUser`(0,'2,3,4', 1,8);
 
 
