@@ -16,9 +16,10 @@ DROP PROCEDURE IF EXISTS FPS_DataCenter.DC_DataCenter_ProcessTransaction$$
 
 CREATE PROCEDURE FPS_DataCenter.DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT)
 BEGIN
-	DECLARE RowIndex 		INT UNSIGNED DEFAULT 0;
-	DECLARE RowCount 		INT UNSIGNED;
-	DECLARE XpathRow 		VARCHAR(50);
+	DECLARE RowIndex 			INT UNSIGNED DEFAULT 0;
+	DECLARE RowCount 			INT UNSIGNED;
+	DECLARE XpathRow 			VARCHAR(50);
+    DECLARE	UnhandleStatus			TINYINT DEFAULT 2;
     
     #=========================================================================================
     DROP TEMPORARY TABLE IF EXISTS Temp_Transaction;
@@ -27,29 +28,29 @@ BEGIN
     ( 
 		 LoginName			VARCHAR(50) CHARACTER SET UTF8
 		, SubscriberName	VARCHAR(30) 
-		, TransDate			BIGINT 
-		, CreatedDate		BIGINT        
+		, TransDate			DATETIME 
+		, CreatedDate		DATETIME        
 		, DeviceCode		VARCHAR(32)
         , DeviceCodeStatus	TINYINT(1)
-        , FingeringCode		VARCHAR(5000)
-        , FingeringMoreInfo	VARCHAR(15000)	
-		, IP				BIGINT
-        , IPType			TINYINT(1)	
+        , FingeringCode		VARCHAR(320)
+        , FingeringMoreInfo	TEXT	
+		, IP				DECIMAL(50,0)
 		, PluginID			BIGINT		
 		, URL				VARCHAR(250)
 		, ActionResult		VARCHAR(100)
-		, UserAgent			VARCHAR(500)        
-        , UserAgentCode		VARCHAR(50)
+		, UserAgent			TEXT        
+        , UserAgentCode		VARCHAR(64)
         , BrowserName		VARCHAR(100)
         , OSName			VARCHAR(100)
-		, Flagged			INT
-        , StagingTransID	BIGINT
-        
+		, Flagged			INT        
+        , StagingTransID	BIGINT        
         , SubscriberID		INT        
         , IsDeposit			INT
-        , SubScriberPrefix	VARCHAR(30)
-        , DeviceID			INT
-        , AccountID			INT
+        , SubScriberPrefix	VARCHAR(30)       
+        , AccountID			BIGINT       
+        , SubscriberURLID	BIGINT
+        , ActionResultID	BIGINT
+        , UserAgentID		BIGINT        
 	);
     
 	   
@@ -59,10 +60,10 @@ BEGIN
 	CREATE TEMPORARY TABLE Temp_NewUserAgent
     ( 
 		UserAgent		VARCHAR(500)
-        , UserAgentCode	VARCHAR(32)
+        , UserAgentCode	VARCHAR(64)
         , BrowserName		VARCHAR(100)
         , OSName			VARCHAR(100)
-        , CreatedDate		BIGINT		COMMENT 'Date Only'
+        , CreatedDate		DATETIME		COMMENT 'Date Only'
 	);
 	
    
@@ -77,7 +78,7 @@ BEGIN
 			,   ']');                     
 		
 		INSERT INTO Temp_Transaction(StagingTransID, DeviceCode, DeviceCodeStatus, FingeringCode, FingeringMoreInfo, LoginName, SubscriberName, TransDate, CreatedDate
-				, IP, IPType, PluginID, URL, ActionResult, UserAgent, UserAgentCode, BrowserName, OSName, Flagged)
+				, IP, PluginID, URL, ActionResult, UserAgent, UserAgentCode, BrowserName, OSName, Flagged)
 		SELECT 	EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::StagingTransID'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::DeviceCodeStatus'))
@@ -88,7 +89,6 @@ BEGIN
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::TransDate'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::CreatedDate'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::IP'))
-                , EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::IPType'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::PluginID'))				
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::URL'))
 				, EXTRACTVALUE(ip_TransXml,CONCAT(XpathRow,'/attribute::ActionResult'))
@@ -100,8 +100,7 @@ BEGIN
 		;
     
 	END WHILE;
-    
-    
+   
     #========INSERT: Subscriber which are unhandled interagtion=============================================================   
 	INSERT INTO FPS_Admin.Subscriber (SubscriberName, SubscriberPrefix, CreatedDate, CreatedBy, IsDeposit, Status, IsTest)
 	SELECT 		ts.SubscriberName
@@ -109,10 +108,9 @@ BEGIN
 					, MIN(ts.TransDate) AS CreatedDate
                     , NULL AS CreatedBy
                     , NULL AS IsDeposit
-                    , 2 AS Status			#0: Inactive; 1: Active; 2 Unhandled
+                    , UnhandleStatus AS Status			#0: Inactive; 1: Active; 2 Unhandled
                     , NULL AS IsTest
-    FROM		Temp_Transaction AS ts
-    
+    FROM		Temp_Transaction AS ts    
 	LEFT JOIN	FPS_Admin.Subscriber AS sb
 				ON ts.SubscriberName = sb.SubscriberName
 	WHERE		sb.SubscriberName IS NULL
@@ -181,6 +179,16 @@ BEGIN
 	INNER JOIN	FPS_DataCenter.Browser AS br
 				ON nu.BrowserName = br.BrowserName;
                 
+	INSERT INTO FPS_DataCenter.ActionResult(ActionResultKey, ActionStatus, CreatedDate)
+    SELECT		ts.ActionResult
+				, UnhandleStatus AS ActionStatus
+				, MIN(ts.CreatedDate) AS CreatedDate
+	FROM		Temp_Transaction AS ts
+    LEFT JOIN	FPS_DataCenter.ActionResult AS ar
+				ON ar.ActionResultKey = ts.ActionResult
+    WHERE		ar.ActionResultID IS NULL
+    GROUP BY	ts.ActionResult;   
+    
     #=====INSERT: NEW ACCOUNT==========================================================================================================    
     INSERT INTO FPS_DataCenter.Account
 	(
@@ -219,209 +227,10 @@ BEGIN
     
    #======UPDATE: Temp_Transaction.AccountID========================================================================================      
     UPDATE 	Temp_Transaction AS ts
-			, FPS_DataCenter.Account AS ac
-	SET		ts.AccountID = ac.AccountID
-    WHERE	( ts.LoginName 		= ac.FirstLoginName
-				OR ts.LoginName = ac.UserName
-				OR ts.LoginName = ac.Username2
-				OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2
-			);			
- 	                
-	#========PROCESS DEVICEID==============================================
-	#========================================================================================================================
-    DROP TEMPORARY TABLE IF EXISTS Temp_NotNullDeviceCodeTrans;
-	
-	CREATE TEMPORARY TABLE Temp_NotNullDeviceCodeTrans
-    ( 	
-        AccountID			BIGINT
-        , FingeringCode		VARCHAR(5000)
-        , DeviceCode		VARCHAR(50)
-        , MinTransDate		BIGINT
-        , DeviceID			BIGINT
-	);    
-	
-    DROP TEMPORARY TABLE IF EXISTS Temp_RecoverDeviceInfo;
-	
-	CREATE TEMPORARY TABLE Temp_RecoverDeviceInfo
-      ( 	
-        AccountID				BIGINT
-        , FingeringCode			VARCHAR(5000)
-        , OldFingeringCode		VARCHAR(5000)
-		, MergeFingeringCode	VARCHAR(5000)
-        , DeviceCode			VARCHAR(32)
-        , RecoverDeviceID		BIGINT
-        , DeviceFingeringID		BIGINT
-	);    
-      
-    INSERT INTO Temp_NotNullDeviceCodeTrans (AccountID, FingeringCode, DeviceCode, MinTransDate)
-	SELECT DISTINCT	ts.AccountID
-					, ts.FingeringCode
-					, ts.DeviceCode
-                    , MIN(ts.TransDate)
-	FROM	Temp_Transaction AS ts
-    WHERE	ts.DeviceCode IS NOT NULL
-	GROUP BY	ts.AccountID
-				, ts.FingeringCode
-				, ts.DeviceCode;
-	
-	SELECT 'Temp_NotNullDeviceCodeTrans', ts.* FROM Temp_NotNullDeviceCodeTrans ts;
-    
-    INSERT INTO Temp_RecoverDeviceInfo (AccountID, FingeringCode, OldFingeringCode, MergeFingeringCode, DeviceCode, RecoverDeviceID, DeviceFingeringID)
-    SELECT 	DISTINCT nd.AccountID
-			, nd.FingeringCode
-            , dd.FingeringCode AS OldFingeringCode
-            , DC_MERGELISTS(',', nd.FingeringCode,dd.FingeringCode) AS MergeFingeringCode # return NULL if dd.FingeringCode not has new FGCode
-            , nd.DeviceCode
-            , dd.DeviceID
-            , dd.DeviceFingeringID
-    FROM		Temp_NotNullDeviceCodeTrans AS nd
-    INNER JOIN	Association ass
-				ON nd.AccountID = ass.AccountID
-	INNER JOIN	DeviceFingering dd
-				ON	dd.DeviceID = ass.DeviceID
-					AND DC_ISLISTSMATCHBYITEM(',',nd.FingeringCode,dd.FingeringCode) = 1;
-    
-    UPDATE Temp_NotNullDeviceCodeTrans dc
-    INNER JOIN Temp_RecoverDeviceInfo rd
-				ON dc.DeviceCode = rd.DeviceCode
-                AND dc.AccountID = rd.AccountID
-    SET dc.DeviceID = rd.RecoverDeviceID;
-    
-    select  dc.DeviceCode
-                    , MIN(dc.MinTransDate)
-    FROM	Temp_NotNullDeviceCodeTrans AS dc
-    LEFT JOIN Temp_RecoverDeviceInfo AS rd 
-				ON dc.AccountID = rd.AccountID
-				AND dc.DeviceCode = rd.DeviceCode
-	WHERE		rd.DeviceCode IS NULL
-    GROUP BY dc.DeviceCode;
-    
-    INSERT INTO Device (FirstDeviceCode, CreatedDate)
-    SELECT dc.DeviceCode
-                    , MIN(dc.MinTransDate)
-    FROM	Temp_NotNullDeviceCodeTrans AS dc
-    LEFT JOIN Temp_RecoverDeviceInfo AS rd 
-				ON dc.AccountID = rd.AccountID
-				AND dc.DeviceCode = rd.DeviceCode
-	LEFT JOIN 	Device dv2
-				ON dc.DeviceCode = dv2.FirstDeviceCode
-	WHERE		rd.DeviceCode IS NULL
-				AND dv2.FirstDeviceCode IS NULL
-	GROUP BY dc.DeviceCode;
-    
-    select '222';
-    
-    UPDATE Device AS dd
-    INNER JOIN Temp_NotNullDeviceCodeTrans AS dc
-				ON dd.FirstDeviceCode = dc.DeviceCode
-                AND dd.CreatedDate = dc.MinTransDate
-	SET dd.FirstFingeringCode = dc.FingeringCode
-		, dd.FristAccessAccountID = dc.AccountID;
-    #==================Insert New DeviceCode of Device Recover===
-                 
-    INSERT INTO Device(DeviceID, DeviceCode, DeviceCodeStatus, CreatedDate)
-    SELECT 		rd.DeviceID
-                , 1 AS DeviceCodeStatus				#======Is recovered
-                , MIN(nd.MinTransDate)
-    FROM 		Temp_RecoverDeviceInfo AS rd
-    INNER JOIN Temp_NotNullDeviceCodeTrans AS nd
-				ON rd.DeviceCode = nd.DeviceCode
-    LEFT JOIN	Device AS dv
-				ON rd.DeviceCode = dv.DeviceCode
-	WHERE		dv.DeviceCode IS NULL
-    GROUP BY	rd.DeviceID, rd.DeviceCode;
-   
-    #==================================================================================================
-    INSERT INTO DeviceCode(DeviceCode, DeviceID, DeviceCodeStatus, CreatedDate)
-	SELECT 		nd.DeviceCode
-                , nd.DeviceID
-                , nd.MinTransDate
-    FROM 		Temp_NotNullDeviceCodeTrans AS nd
-    LEFT JOIN	Temp_RecoverDeviceInfo AS dc
-				ON nd.DeviceCode = dc.DeviceCode
-	WHERE		dc.DeviceCode IS NULL;
-    
-    UPDATE		Temp_Transaction AS ts
-    INNER JOIN	Device AS dv
-				ON ts.DeviceCode = dv.DeviceCode
-	SET			ts.DeviceID = ts.DeviceID;
-        
-    #===============Update DeviceFingeringsFingering if MargeFingeringCode Is NOT NULL
-    UPDATE DeviceFingering dd
-	INNER JOIN Temp_RecoverDeviceInfo rd
-				ON dd.DeviceFingeringID = rd.DeviceFingeringID
-    SET		dd.FingeringCode = MergeFingeringCode
-    WHERE rd.MergeFingeringCode IS NOT NULL;
-    
-    SELECT 'DeviceFingering', ts.* FROM DeviceFingering ts;
-    
-    #*****************INSERT INTO DeviceFingering*******************
-    INSERT INTO DeviceFingering(DeviceID, CreatedDate, FingeringCode, FingeringMoreInfo, UserAgentID, PlugingID)
-    SELECT	DISTINCT ts.FingeringCode
-    FROM		Temp_Transaction AS ts
-    LEFT JOIN	DeviceFingering AS dd
-				ON DC_ISLISTSMATCHBYITEM(',',ts.FingeringCode,dd.FingeringCode) = 1
-	INNER JOIN	Device AS dv
-				ON ts.DeviceID = dv.DeviceID
-	WHERE		dd.DeviceFingeringID IS NULL
-	;
-    
-	#========INSERT: Associations--==========================================================================================    
-   INSERT INTO FPS_DataCenter.Association(DeviceID, AccountID, SubscriberID, CreatedDate, SyncGraphDB)
-    SELECT		ts.DeviceID
-				, ts.AccountID
-				, ts.SubscriberID
-                , MIN(ts.TransDate)
-                , 0 AS SyncGraphDB
-    FROM		Temp_Transaction AS ts
-	INNER JOIN	Device AS dv
-				ON dv.DeviceCode = ts.DeviceCode
-    LEFT JOIN	FPS_DataCenter.Association AS ac
-				ON	(ts.SubscriberID	= ac.SubscriberID
-                AND	ts.AccountID 		= ac.AccountID
-                AND	ts.DeviceID			= ac.DeviceID)
-	WHERE		ac.AccountID IS NULL
-    GROUP BY	ts.DeviceID
-				, ts.AccountID
-				, ts.SubscriberID;
-                
-    SELECT 'Association', ts.* FROM Association ts;
-    #========================================================================================================    
-    INSERT INTO FPS_DataCenter.ActionResult(ActionResultKey, Status, CreatedDate)
-	SELECT 		ts.ActionResult              
-                , 2 AS Status
-                , MIN(ts.TransDate) AS CreatedDate
-	FROM		Temp_Transaction AS ts	
-	LEFT JOIN	FPS_DataCenter.ActionResult AS ar
-				ON ts.ActionResult = ar.ActionResultKey
-	WHERE		ar.ActionResultKey IS NULL
-    GROUP BY	ts.ActionResult;   
-    
-    #========INSERT: Transaction===============================================================================================
-	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, DeviceID, LoginName, AccountID
-				,  TransDate, CreatedDate, IP, IPRangeLocationID, PluginID, DeviceStatus, Flagged,ActionResultID)                
-	SELECT 		ts.StagingTransID
-				, su.SubscriberID
-				, su.SubscriberURLID
-				, ua.UserAgentID
-				, dv.DeviceID
-				, ts.LoginName
-				, ac.AccountID            
-				, ts.TransDate
-				, ts.TransDate
-				, ts.IP
-                , (SELECT IPRangeLocationID FROM IPRangeLocation AS ir WHERE (ts.IP BETWEEN ir.FromIP AND ir.ToIP) AND ir.Status = 1 AND ir.IPType = ts.IPType) AS IPRangeLocationID #===Get IPRangeID which Active(status=1)
-				, ts.PluginID
-				, ts.DeviceCodeStatus
-				, ts.Flagged
-				, ar.ActionResultID              
-	FROM		Temp_Transaction AS ts
-    INNER JOIN	FPS_DataCenter.SubscriberURL AS su
+	INNER JOIN	FPS_DataCenter.SubscriberURL AS su
 				ON ts.URL = su.URL AND ts.SubscriberID = su.SubscriberID
 	INNER JOIN	FPS_DataCenter.UserAgent AS ua
 				ON ts.UserAgentCode = ua.UserAgentCode
-	INNER JOIN	FPS_DataCenter.Device AS dv
-				ON ts.DeviceCode = dv.DeviceCode
 	INNER JOIN	FPS_DataCenter.ActionResult AS ar
 				ON ts.ActionResult	= ar.ActionResultKey
 	INNER JOIN	FPS_DataCenter.Account AS ac
@@ -429,7 +238,303 @@ BEGIN
 					AND (ts.LoginName = ac.FirstLoginName
 						OR ts.LoginName = ac.UserName
 						OR ts.LoginName = ac.Username2
-						OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2);
+						OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2)
+	SET		ts.AccountID = ac.AccountID
+			, ts.UserAgentID = ua.UserAgentID
+            , ts.ActionResultID = ar.ActionResultID
+            , ts.SubscriberURLID  = su.SubscriberURLID
+    WHERE	( ts.LoginName 		= ac.FirstLoginName
+				OR ts.LoginName = ac.UserName
+				OR ts.LoginName = ac.Username2
+				OR CONCAT(ts.SubScriberPrefix,ts.LoginName) = ac.Username2
+			);
+	#========PROCESS DEVICE==============================================
+	#========================================================================================================================
+	#PROCESS DEVICE: INSERT NEW DEVICE IF DeviceCodeStatus IS NULL
+    DROP TEMPORARY TABLE IF EXISTS Temp_DeviceTrans;
+	
+	CREATE TEMPORARY TABLE Temp_DeviceTrans
+    ( 
+		 LoginName			VARCHAR(50) CHARACTER SET UTF8
+		, SubscriberName	VARCHAR(30) 
+		, TransDate			DATETIME 
+		, CreatedDate		DATETIME        
+		, DeviceCode		VARCHAR(32)
+        , DeviceCodeStatus	TINYINT(1)
+        , FingeringCode		VARCHAR(320)
+        , FingeringMoreInfo	TEXT	
+		, IP				DECIMAL(50,0)
+		, PluginID			BIGINT		
+		, URL				VARCHAR(250)
+		, ActionResult		VARCHAR(100)
+		, UserAgent			TEXT        
+        , UserAgentCode		VARCHAR(64)
+        , BrowserName		VARCHAR(100)
+        , OSName			VARCHAR(100)
+		, Flagged			INT
+        , StagingTransID	BIGINT        
+        , SubscriberID		INT        
+        , IsDeposit			INT
+        , SubScriberPrefix	VARCHAR(30)        
+        , DeviceID			BIGINT
+        , AccountID			BIGINT
+        , SubscriberURLID	BIGINT        
+        , UserAgentID		BIGINT
+        , ActionResultID	BIGINT
+        , MatchFingeringCode	TINYINT(1)
+        , MergeFingeringCode	VARCHAR(320)
+        , OldFingeringCode		VARCHAR(320)
+        , ExistingDeviceId		BIGINT
+        , DeviceFingeringID		BIGINT
+	);
+	
+    DROP TEMPORARY TABLE IF EXISTS Temp_NewDevice;
+    CREATE TEMPORARY TABLE Temp_NewDevice(
+		DeviceCode				VARCHAR(32)
+        , MinStagingTransID		BIGINT
+    );  
+   
+    
+    INSERT INTO Temp_DeviceTrans(StagingTransID, DeviceCode, DeviceCodeStatus, FingeringCode, FingeringMoreInfo, LoginName, SubscriberName, TransDate, CreatedDate
+				, IP, PluginID, URL, ActionResult, UserAgent, UserAgentCode, BrowserName, OSName, Flagged,	SubscriberID
+                , AccountID, SubscriberURLID, UserAgentID , ActionResultID, MatchFingeringCode, MergeFingeringCode, ExistingDeviceId, DeviceFingeringID)
+    SELECT 		ts.StagingTransID
+				, ts.DeviceCode
+                , ts.DeviceCodeStatus
+                , ts.FingeringCode
+                , ts.FingeringMoreInfo
+                , ts.LoginName
+                , ts.SubscriberName
+                , ts.TransDate
+                , ts.CreatedDate
+				, ts.IP
+                , ts.PluginID
+                , ts.URL
+                , ts.ActionResult
+                , ts.UserAgent
+                , ts.UserAgentCode
+                , ts.BrowserName
+                , ts.OSName
+                , ts.Flagged
+                , ts.SubscriberID
+                , ts.AccountID
+                , ts.SubscriberURLID
+                , ts.UserAgentID
+                , ts.ActionResultID
+                , DC_ISLISTSMATCHBYITEM(';',ts.FingeringCode, df.FingeringCode) AS MatchFingeringCode
+                , DC_MERGEIFDIFFERENCELISTS(';', ts.FingeringCode, df.FingeringCode) AS MergeFingeringCode
+                , dc.DeviceID
+                , df.DeviceFingeringID
+	FROM		Temp_Transaction AS ts
+    LEFT JOIN	FPS_DataCenter.Association AS ac
+					ON ts.AccountID = ac.AccountID
+	LEFT JOIN	FPS_DataCenter.DeviceFingering AS df
+					ON  ac.DeviceID = df.DeviceID
+	LEFT JOIN	FPS_DataCenter.DeviceCode AS dc
+				ON ts.DeviceCode = dc.DeviceCode
+    WHERE		ts.DeviceCode IS NOT NULL; 	    
+    
+    #SELECT 'Temp_DeviceTrans', t.* FROM Temp_DeviceTrans t;
+    
+    INSERT INTO Temp_NewDevice(DeviceCode, MinStagingTransID)
+    SELECT dt.DeviceCode
+			, MIN(dt.StagingTransID)
+    FROM   Temp_DeviceTrans AS dt
+    WHERE 	dt.MatchFingeringCode = 0 AND dt.ExistingDeviceId IS NULL
+    GROUP BY dt.DeviceCode;	
+    
+    #SELECT 'Temp_NewDevice', t.* FROM Temp_NewDevice t;
+    
+	INSERT INTO FPS_DataCenter.Device(FirstDeviceCode, FirstFingeringCode, FirstAccountID, StagingTransID, CreatedDate, DeviceStatus)
+    SELECT 		dt.DeviceCode
+				, dt.FingeringCode
+				, dt.AccountID
+                , nd.MinStagingTransID 
+				, dt.CreatedDate
+				, 0 AS DeviceStatus
+    FROM		Temp_DeviceTrans AS dt
+    INNER JOIN	Temp_NewDevice AS nd
+				ON nd.MinStagingTransID = dt.StagingTransID;                
+    
+    
+    #Update Device Status for Existing Device Device Status = 1 
+     DROP TEMPORARY TABLE IF EXISTS Temp_ExistingDevice;
+    CREATE temporary TABLE Temp_ExistingDevice(
+		ExistingDeviceID BIGINT
+    );
+    
+    INSERT INTO Temp_ExistingDevice(ExistingDeviceID)
+    SELECT 	dt.ExistingDeviceID
+    FROM	Temp_DeviceTrans AS dt
+	INNER JOIN	FPS_DataCenter.DeviceCode as dc
+    LEFT JOIN	Temp_NewDevice as nd
+				ON nd.DeviceCode = dt.DeviceCode
+    WHERE		dt.ExistingDeviceID = dc.DeviceID
+				AND nd.DeviceCode IS NULL
+    GROUP BY	dt.ExistingDeviceID;     
+       
+    UPDATE FPS_DataCenter.Device dv
+    INNER JOIN Temp_ExistingDevice as ed
+				on dv.DeviceID = ed.ExistingDeviceID
+	SET	dv.DeviceStatus = 1;
+    
+    #SELECT 'aaa';
+	#Update Device Status for Recover Device Device Status = 2
+    DROP TEMPORARY TABLE IF EXISTS Temp_RecoverDevice;
+	CREATE temporary TABLE Temp_RecoverDevice(
+		RecoverDeviceID BIGINT
+    );
+    
+    INSERT INTO Temp_RecoverDevice(RecoverDeviceID)
+    SELECT 		dt.ExistingDeviceID
+    FROM		Temp_DeviceTrans AS dt
+	LEFT JOIN	Temp_ExistingDevice as ed
+				ON ed.ExistingDeviceID = dt.ExistingDeviceID
+    WHERE		ed.ExistingDeviceID IS NULL ;    
+    
+    #SELECT 'bbb';
+	UPDATE FPS_DataCenter.Device dv
+    INNER JOIN Temp_RecoverDevice as ed
+				on dv.DeviceID = ed.RecoverDeviceID
+	SET	dv.DeviceStatus = 2;
+    
+   
+    #SELECT 'FPS_DataCenter.Device', t.* FROM FPS_DataCenter.Device t;
+    
+	INSERT INTO FPS_DataCenter.DeviceCode(DeviceCode, DeviceID, CreatedDate)
+    SELECT		nd.DeviceCode
+				, dv.DeviceID
+                , dv.CreatedDate
+    FROM 		Temp_NewDevice	 AS nd
+    INNER JOIN	FPS_DataCenter.Device AS dv
+				ON nd.DeviceCode = dv.FirstDeviceCode;
+    
+    #SELECT 'FPS_DataCenter.DeviceCode01', t.* FROM FPS_DataCenter.DeviceCode t;
+    
+    INSERT INTO FPS_DataCenter.DeviceCode(DeviceCode, DeviceID, CreatedDate)
+    SELECT		nd.DeviceCode
+				, nd.ExistingDeviceID
+                , MIN(nd.CreatedDate)
+    FROM 		Temp_DeviceTrans AS nd
+    LEFT JOIN	FPS_DataCenter.DeviceCode dc
+				ON dc.DeviceCode = nd.DeviceCode
+	WHERE		nd.ExistingDeviceId IS NOT NULL
+				AND dc.DeviceID IS NULL
+    GROUP BY	nd.DeviceCode, nd.ExistingDeviceID;
+    
+	#SELECT 'FPS_DataCenter.DeviceCode02', t.* FROM FPS_DataCenter.DeviceCode t;
+     
+	INSERT INTO FPS_DataCenter.DeviceFingering(DeviceID, FingeringCode, FingeringMoreInfo, UserAgentID, PluginID, CreatedDate)
+    SELECT 		dv.DeviceID
+				, dv.FirstFingeringCode
+				, dt.FingeringMoreInfo
+				, dt.UserAgentID
+				, dt.PluginID
+				, dt.CreatedDate
+    FROM		FPS_DataCenter.Device AS dv
+    INNER JOIN	Temp_DeviceTrans AS dt
+				ON dt.StagingTransID = dv.StagingTransID
+	INNER JOIN	Temp_NewDevice AS nd
+				ON nd.MinStagingTransID = dt.StagingTransID;               	
+    
+	#SELECT 'FPS_DataCenter.DeviceFingering', t.* FROM FPS_DataCenter.DeviceFingering t;
+   
+	#========INSERT: Associations--==========================================================================================    
+   INSERT INTO FPS_DataCenter.Association(DeviceID, AccountID, SubscriberID, CreatedDate, SyncGraphDB)
+    SELECT		dv.DeviceID
+				, ts.AccountID
+				, ts.SubscriberID
+                , MIN(ts.TransDate)
+                , 0 AS SyncGraphDB
+    FROM		Temp_Transaction AS ts
+	INNER JOIN	FPS_DataCenter.Device AS dv
+				ON dv.FirstDeviceCode = ts.DeviceCode
+    LEFT JOIN	FPS_DataCenter.Association AS ac
+				ON	(ts.SubscriberID	= ac.SubscriberID
+                AND	ts.AccountID 		= ac.AccountID
+                AND	dv.DeviceID			= ac.DeviceID)
+	WHERE		ac.AccountID IS NULL
+				AND dv.DeviceID IS NOT NULL
+    GROUP BY	dv.DeviceID
+				, ts.AccountID
+				, ts.SubscriberID;
+    
+    #========INSERT: Transaction: DEVICECODE NULL==============================================================================================='
+	#SELECT 	'FPS_DataCenter.Transaction01', t.* FROM FPS_DataCenter.Transaction t;
+    INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, LoginName, AccountID
+				,  TransDate, CreatedDate, IP, IPRangeLocationID, PluginID, DeviceStatus, Flagged,ActionResultID, DeviceCode)                
+	SELECT 		ts.StagingTransID
+				, ts.SubscriberID
+				, ts.SubscriberURLID
+				, ts.UserAgentID
+				, ts.LoginName
+				, ts.AccountID            
+				, ts.TransDate
+				, ts.CreatedDate
+				, ts.IP
+                , (SELECT IPRangeLocationID FROM IPRangeLocation AS ir WHERE (ts.IP BETWEEN ir.FromIP AND ir.ToIP) AND ir.Status = 1) AS IPRangeLocationID #===Get IPRangeID which Active(status=1)
+				, ts.PluginID
+				, ts.DeviceCodeStatus
+				, ts.Flagged
+				, ts.ActionResultID
+				, ts.DeviceCode
+	FROM		Temp_Transaction AS ts
+    WHERE		ts.DeviceCode IS NULL;
+
+	#SELECT 	'FPS_DataCenter.Transaction02', t.* FROM FPS_DataCenter.Transaction t;
+    #========INSERT TRANS: DeviceCODE IS NOT NULL=======================================================
+	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, DeviceID, LoginName, AccountID
+				,  TransDate, CreatedDate, IP, IPRangeLocationID, PluginID, DeviceStatus, Flagged,ActionResultID, DeviceCode, DeviceFingeringID)                
+	SELECT 		ts.StagingTransID
+				, ts.SubscriberID
+				, ts.SubscriberURLID
+				, ts.UserAgentID
+				, ts.ExistingDeviceID
+				, ts.LoginName
+				, ts.AccountID            
+				, ts.TransDate
+				, ts.CreatedDate
+				, ts.IP
+                , (SELECT IPRangeLocationID FROM IPRangeLocation AS ir WHERE (ts.IP BETWEEN ir.FromIP AND ir.ToIP) AND ir.Status = 1) AS IPRangeLocationID #===Get IPRangeID which Active(status=1)
+				, ts.PluginID
+				, ts.DeviceCodeStatus
+				, ts.Flagged
+				, ts.ActionResultID
+				, ts.DeviceCode
+                , ts.DeviceFingeringID
+	FROM		Temp_DeviceTrans AS ts
+    WHERE		ts.ExistingDeviceID IS NOT NULL;
+    
+    #SELECT 	'FPS_DataCenter.Transaction03', t.* FROM FPS_DataCenter.Transaction t;
+      
+    INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, DeviceID, LoginName, AccountID
+				,  TransDate, CreatedDate, IP, IPRangeLocationID, PluginID, DeviceStatus, Flagged,ActionResultID, DeviceCode, DeviceFingeringID)                
+	SELECT 		ts.StagingTransID
+				, ts.SubscriberID
+				, ts.SubscriberURLID
+				, ts.UserAgentID
+				, dc.DeviceID
+				, ts.LoginName
+				, ts.AccountID            
+				, ts.TransDate
+				, ts.CreatedDate
+				, ts.IP
+                , ir.IPRangeLocationID
+				, ts.PluginID
+				, ts.DeviceCodeStatus
+				, ts.Flagged
+				, ts.ActionResultID
+				, ts.DeviceCode
+                , df.DeviceFingeringID
+	FROM		Temp_DeviceTrans AS ts
+    LEFT JOIN	FPS_DataCenter.DeviceCode as dc
+				on ts.DeviceCode = dc.DeviceCode
+	LEFT JOIN 	FPS_DataCenter.DeviceFingering as df
+				on dc.DeviceID = df.DeviceID
+	LEFT JOIN	IPRangeLocation AS ir
+				ON (ts.IP BETWEEN ir.FromIP AND ir.ToIP) AND ir.Status = 1
+    WHERE		ts.ExistingDeviceID IS NULL
+				AND DC_ISLISTSMATCHBYITEM(';',ts.FingeringCode, df.FingeringCode) = 1;  
                         
     #==========UPDATE: StagingRawTransaction.IsProcessed = 1================================================================================================================
 	UPDATE 	FPS_StagingRawTrans.RawTransaction AS st
@@ -437,8 +542,7 @@ BEGIN
 	SET		st.IsProcessed = 1
 	WHERE	st.StagingTransID = ts.StagingTransID
 			AND st.IsProcessed = 0;	
-        
-          
+
 END$$
 DELIMITER ;
 
