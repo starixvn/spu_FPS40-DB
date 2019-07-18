@@ -1,12 +1,22 @@
+/*
+	Created:	20190610@Casey.Huynh
+	Task :		Get Association list by SyncGraphDB status;
+	DB:			FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 DELIMITER $$
-CREATE DEFINER=`fps`@`%` PROCEDURE `DC_UpdateIsSyncGraphDBByAssociationID`(IN ip_AssociationXML LONGTEXT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationXML LONGTEXT)
 BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount INT UNSIGNED;
 	DECLARE XpathRow VARCHAR(255);
     
-    DROP TABLE IF EXISTS Temp_Association;
+    DROP TEMPORARY TABLE IF EXISTS Temp_Association;
     
 	CREATE TEMPORARY TABLE Temp_Association (
 	  AssociationID BIGINT

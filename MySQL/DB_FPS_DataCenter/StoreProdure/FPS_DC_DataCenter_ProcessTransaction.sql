@@ -120,7 +120,7 @@ BEGIN
 	WHERE		sb.SubscriberName IS NULL
     GROUP BY	ts.SubscriberName;
     
-    UPDATE Temp_Transaction AS ts
+    UPDATE	Temp_Transaction AS ts
 			, FPS_Admin.Subscriber AS sb
 	SET		ts.SubscriberID 		= sb.SubscriberID
 			, ts.IsDeposit 			= sb.IsDeposit
@@ -307,7 +307,7 @@ BEGIN
 					ON  ac.DeviceID = df.DeviceID
 	LEFT JOIN	FPS_DataCenter.DeviceCode AS dc
 				ON ts.DeviceCode = dc.DeviceCode
-    WHERE		ts.DeviceCode IS NOT NULL; 	  
+    WHERE		ts.DeviceCode != ''; 	  
    
     
     INSERT INTO Temp_DeviceTrans(StagingTransID, DeviceCode, DeviceCodeStatus, FingeringCode, FingeringMoreInfo, LoginName, SubscriberName, TransDate, CreatedDate
@@ -348,7 +348,7 @@ BEGIN
 					ON  ac.DeviceID = df.DeviceID AND  FPS_DC_ISLISTSMATCHBYITEM(';',ts.FingeringCode, df.FingeringCode) = 1
 	LEFT JOIN	FPS_DataCenter.DeviceCode AS dc
 				ON ts.DeviceCode = dc.DeviceCode
-    WHERE		ts.DeviceCode IS NOT NULL; 	    
+    WHERE		ts.DeviceCode  != ''; 	    
     
     #SELECT  current_timestamp() AS 'DONE: Temp DeviceTrans ';
     SELECT 'Temp_DeviceTrans01', t.* FROM	 Temp_DeviceTrans t;
@@ -502,7 +502,7 @@ BEGIN
 				, ts.ActionResultID
 				, ts.DeviceCode
 	FROM		Temp_Transaction AS ts
-    WHERE		ts.DeviceCode IS NULL;
+    WHERE		ts.DeviceCode = '';
 	  #SELECT  current_timestamp() AS 'DONE: Transaction01'; 
 	SELECT 	'FPS_DataCenter.Transaction02', t.* FROM FPS_DataCenter.Transaction t;
     #========INSERT TRANS: DeviceCODE IS NOT NULL=======================================================
@@ -529,7 +529,7 @@ BEGIN
     WHERE		ts.RecoverDeviceID IS NOT NULL;
       #SELECT  current_timestamp() AS 'DONE: Transaction02'; 
     SELECT 	'FPS_DataCenter.Transaction03', t.* FROM FPS_DataCenter.Transaction t;
-    
+    SELECT 'Temp_DeviceTrans_DEBUG10', ts.* FROM Temp_DeviceTrans AS ts;
     INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID,  SubURLID, UserAgentID, DeviceID, LoginName, AccountID
 				,  TransDate, CreatedDate, IP, IPRangeLocationID, PluginID, DeviceStatus, Flagged,ActionResultID, DeviceCode, DeviceFingeringID)                
 	SELECT 		ts.StagingTransID

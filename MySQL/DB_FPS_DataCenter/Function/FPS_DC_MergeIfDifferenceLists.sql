@@ -1,9 +1,16 @@
-USE `FPS_DataCenter`;
-DROP FUNCTION IF EXISTS `DC_MergeIfDifferenceLists`;
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Merge List A and List B. Return Merge List if A difference B else return NULL
+	DB: FPS_DataCenter
+	Original:
 
+	Revisions:
+	Param's Explanation (filtered by):
+*/
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE DEFINER=`fps`@`%` FUNCTION `DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000)) RETURNS VARCHAR(5000) CHARSET UTF8
+
+CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000)) RETURNS VARCHAR(5000) CHARSET UTF8
     DETERMINISTIC
 BEGIN
 	DECLARE i 		INT;
@@ -11,33 +18,34 @@ BEGIN
 	DECLARE result 	NVARCHAR(5000) DEFAULT NULL;
 	DECLARE	CountTable01 INT;
     DECLARE CountTableMerge INT;
-    
-    
-    DROP TEMPORARY TABLE IF EXISTS temp_Table01;
-	DROP TEMPORARY TABLE IF EXISTS temp_Table02;
-	DROP TEMPORARY TABLE IF EXISTS temp_TableMerge;
-    
+      
+    DROP temporary TABLE if exists temp_Table01;
 	CREATE TEMPORARY TABLE temp_Table01(
 		item NVARCHAR(5000)
 	);
+    
 	#----------------------------------------
-
+	DROP temporary TABLE if exists temp_Table02;
 	CREATE TEMPORARY TABLE temp_Table02(
-		item VARCHAR(5000)
+		item NVARCHAR(5000)
 	);
     
+    DROP temporary TABLE if exists temp_TableMerge;
     CREATE TEMPORARY TABLE temp_TableMerge(
 		item NVARCHAR(5000)
 	);
  #------------------------------------------
 	SET i = 0;
+    IF ip_List01 IS NULL THEN 
+		SET ip_List01 = '';
+    END IF;
 	SET ip_List01 = CONCAT(ip_List01,ip_seperator);
 	SIMPLE_LOOP: LOOP
 
 		SET i = i+1;
 
 		-- Split based on " & "
-		SET str = DC_SPLITSTRING(ip_List01,ip_seperator,i);
+		SET str = FPS_DC_SPLITSTRING(ip_List01,ip_seperator,i);
 		IF str = '' THEN
 		LEAVE SIMPLE_LOOP;
 		END IF;
@@ -50,6 +58,9 @@ BEGIN
  
  #-----------------------------------
 	SET i = 0;
+    IF ip_List02 IS NULL THEN 
+		SET ip_List02 = '';
+    END IF;
     SET ip_List02 = CONCAT(ip_List02,ip_seperator);
     
 	SIMPLE_LOOP: LOOP
@@ -57,7 +68,7 @@ BEGIN
 		SET i = i+1;
 
 		-- Split based on " & "
-		SET str = DC_SPLITSTRING(ip_List02,ip_seperator,i);
+		SET str = FPS_DC_SPLITSTRING(ip_List02,ip_seperator,i);
 		IF str = '' THEN
 		LEAVE SIMPLE_LOOP;
 		END IF;
@@ -80,9 +91,9 @@ BEGIN
     
     IF (CountTable01 != CountTableMerge) THEN
     BEGIN    
-		SET result = (	SELECT GROUP_CONCAT(m.Item)
+		SET result =  REPLACE((	SELECT GROUP_CONCAT(m.Item)
 						FROM temp_TableMerge m
-						);
+						), ',',ip_seperator);
 	END;
     END IF;
 	RETURN result;

@@ -1,18 +1,16 @@
 /*
-	Created: 20190610@Casey.Huynh
-	Task : Get Association list by SyncGraphDB status;
-	DB: FPS_DataCenter
+	Created:	20190610@Casey.Huynh
+	Task :		Get Association list by SyncGraphDB status;
+	DB:			FPS_DataCenter
 	Original:
 
 	Revisions:
 	Param's Explanation (filtered by):
 */
-DROP PROCEDURE IF EXISTS FPS_DataCenter.DC_GetAssociationForGraphDB;
-
 DELIMITER $$
 USE FPS_DataCenter$$
 
-CREATE PROCEDURE FPS_DataCenter.DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT(1), IN ip_Size INT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT(1), IN ip_Size INT)
 BEGIN
 	
     #=========================================================================================
@@ -24,7 +22,7 @@ BEGIN
 		, DeviceID			BIGINT
         , AccountID			BIGINT
         , SubscriberID		INT
-        , SubscriberName		VARCHAR(30)		CHARACTER SET utf8	NULL
+        , SubscriberName	VARCHAR(30)		CHARACTER SET utf8	NULL
         , IsDeposit			TINYINT(1)
         , CustID			BIGINT								NULL
 		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
