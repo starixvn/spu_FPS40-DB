@@ -11,9 +11,9 @@
 DELIMITER $$
 USE FPS_RawTrans$$
 
-DROP PROCEDURE IF EXISTS FPS_RawTrans.RT_RawTrans_InsertByXML$$
+DROP PROCEDURE IF EXISTS FPS_RawTrans.FPS_RT_RawTrans_InsertByXML$$
 
-CREATE PROCEDURE FPS_RawTrans.RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
+CREATE PROCEDURE FPS_RawTrans.FPS_RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
 BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
@@ -29,7 +29,7 @@ BEGIN
 		, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
         , DeviceCodeStatus			TINYINT 						NULL		COMMENT 'Old, New'
 		, FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'
-		, FingeringMoreInfo				TEXT		 				NULL
+		, FingeringMoreInfo			TEXT		 				NULL
 		, UserAgent					VARCHAR(500) 					NULL
 		, IP						VARCHAR(50) 					NULL
 		, PluginID					BIGINT 							NULL
@@ -96,8 +96,8 @@ BEGIN
 	SELECT
 		rt.LoginName
 		, rt.SubscriberName
-		, UNIX_TIMESTAMP(rt.TransDate) AS TransDate
-		, UNIX_TIMESTAMP(DATE(rt.TransDate)) AS CreatedDate
+		, rt.TransDate
+		, DATE(rt.TransDate) AS CreatedDate
 		, rt.DeviceCode
         , rt.DeviceCodeStatus
 		, rt.FingeringCode

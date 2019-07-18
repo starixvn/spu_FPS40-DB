@@ -10,11 +10,13 @@ Reviewer:
 CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # ======Device============================================
 	CREATE TABLE FPS_DataCenter.Device(
-		DeviceID				BIGINT 			AUTO_INCREMENT
-		, FirstFingeringCode	VARCHAR(5000) 	NULL
+		DeviceID				BIGINT 			AUTO_INCREMENT		
 		, FirstDeviceCode		VARCHAR(32) 	NULL
-        , FristAccessAccountID	BIGINT			NULL			COMMENT ' Date Only'
-        , CreatedDate			BIGINT			NULL			
+        , FirstFingeringCode	VARCHAR(320) 	NULL
+        , FirstAccountID		BIGINT			NULL
+        , StagingTransID		BIGINT			NULL
+        , CreatedDate			DATETIME		NULL
+        , DeviceStatus			TINYINT(1)
         
         , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
         , INDEX			IX_Device_CreatedDate(CreatedDate)
@@ -22,9 +24,10 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 
 # ======Device=============================================
 	CREATE TABLE FPS_DataCenter.DeviceCode(
-		DeviceID			BIGINT 
-		, DeviceCode		VARCHAR(32) 				NOT NULL
-		, CreatedDate		BIGINT						NOT NULL
+		 
+		DeviceCode		VARCHAR(32) 		NOT NULL
+        , DeviceID			BIGINT
+		, CreatedDate		DATETIME		NOT NULL
         
         , PRIMARY KEY	PK_DeviceCode_DeviceCode(DeviceCode)
         , INDEX			IX_DeviceCode_CreatedDate(CreatedDate)
@@ -35,12 +38,12 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # ======DeviceDetail=============================================
 	CREATE TABLE FPS_DataCenter.DeviceFingering(
 		DeviceFingeringID	BIGINT 			AUTO_INCREMENT
-        , DeviceID			VARCHAR(32) 					NOT NULL
-        , FingeringCode		VARCHAR(5000)
+        , DeviceID			VARCHAR(32) 	NOT NULL
+        , FingeringCode		VARCHAR(320)
 		, FingeringMoreInfo	TEXT
-        , UserAgentID		INT								NULL
-		, PluginID			BIGINT							NULL
-        , CreatedDate		BIGINT
+        , UserAgentID		INT				NULL
+		, PluginID			BIGINT			NULL
+        , CreatedDate		DATETIME
         
         , PRIMARY KEY	PK_DeviceFingering_DeviceFingeringID(DeviceFingeringID)        
         , INDEX			IX_DeviceFingering_DeviceCode(DeviceID)
@@ -52,7 +55,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, DeviceID			BIGINT		NOT NULL
 		, AccountID			BIGINT		NOT NULL
 		, SubscriberID		SMALLINT	NOT NULL
-		, CreatedDate		BIGINT		NOT NULL
+		, CreatedDate		DATETIME		NOT NULL
 		, SyncGraphDB		TINYINT(1)	NOT NULL	COMMENT '0: NOT SENT TO GraphDB, 1: SENT'
         
         , PRIMARY KEY	PK_Association_AssociationID(AssociationID)
@@ -71,10 +74,10 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, CustID			BIGINT								NULL
 		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
 		, Username2			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, RoleID			TINYINT(1)								NULL
-		, CurrencyID		TINYINT(2)								NULL
+		, RoleID			TINYINT(1)							NULL
+		, CurrencyID		TINYINT(2)							NULL
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL				
-		, CreatedDate		BIGINT							NOT NULL      
+		, CreatedDate		DATETIME							NOT NULL      
         
         , PRIMARY KEY	PK_Account_AccountID(AccountID)        
         , INDEX			IX_Account_CustID(CustID)
@@ -87,14 +90,14 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		TransID				BIGINT			AUTO_INCREMENT		NOT NULL
         , DeviceID			BIGINT								NULL
         , DeviceCode		VARCHAR(32)							NULL
-		, DeviceFingeringID	BIGINT								NOT NULL
+		, DeviceFingeringID	BIGINT								NULL
 		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
 		, AccountID			BIGINT								NOT NULL
 		, SubscriberID		SMALLINT							NULL	
-		, TransDate			BIGINT							NOT	NULL
-		, CreatedDate		BIGINT							NULL		COMMENT 'Date Only'	NOT	NULL
-		, IP				BIGINT								NULL
-        , IPRangeLocationID	BIGINT									NULL
+		, TransDate			DATETIME							NOT	NULL
+		, CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL
+		, IP				DECIMAL(50,0)						NULL
+        , IPRangeLocationID	BIGINT								NULL
 		, PluginID			BIGINT								NULL
 		, DeviceStatus		TINYINT(1)							NULL		COMMENT 'new, old, retrieve'	NOT	NULL
 		, Flagged			TINYINT(2)							NULL		COMMENT 'captcha & browserless'
@@ -113,7 +116,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.OS(
 		OSID			TINYINT(2)			AUTO_INCREMENT			NOT NULL
 		, OSName		VARCHAR(100)								NULL
-        , CreatedDate	BIGINT									NOT NULL
+        , CreatedDate	DATETIME									NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID(OSID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -121,7 +124,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.Browser(
 		BrowserID			TINYINT(2)			AUTO_INCREMENT	NOT NULL
 		, BrowserName		VARCHAR(100)						NOT NULL
-        , CreatedDate		BIGINT							NOT NULL
+        , CreatedDate		DATETIME							NOT NULL
         
         , PRIMARY KEY 	PK_Browser_BrowserID(BrowserID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -129,9 +132,9 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
 		ActionResultID			TINYINT(2)			AUTO_INCREMENT
-		, ActionResultKey		VARCHAR(100)	CHARACTER SET utf8	NOT NULL
-        , Status				TINYINT(1)							NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
-        , CreatedDate			BIGINT								NOT NULL	COMMENT 'Date Only'
+		, ActionResultKey		VARCHAR(100)		CHARACTER SET utf8	NOT NULL
+        , ActionStatus			TINYINT(1)						NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
+        , CreatedDate			DATETIME						NOT NULL	COMMENT 'Date Only'
         
         , PRIMARY KEY 	PK_ActionResult_ActionResultID(ActionResultID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -142,7 +145,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		SubscriberURLID			SMALLINT		AUTO_INCREMENT	NOT NULL
 		, URL					VARCHAR(250)					NULL
         , SubscriberID			SMALLINT						NULL
-        , CreatedDate			BIGINT						NOT NULL
+        , CreatedDate			DATETIME						NOT NULL
         
         , PRIMARY KEY 	PK_SubscriberURL_SubscriberURLID(SubscriberURLID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -151,26 +154,25 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 	CREATE TABLE FPS_DataCenter.IPRangeLocation(
 		IPRangeLocationID		INT				AUTO_INCREMENT	NOT NULL
         , IPRangeLocationCode 	VARCHAR(64)	
-        , IPType				TINYINT							NOT NULL	COMMENT '0: IPV4, 1: IPV6'
-		, FromIP				BIGINT							NOT NULL
-        , ToIP					BIGINT							NOT NULL
+		, FromIP				DECIMAL(50,0)					NOT NULL
+        , ToIP					DECIMAL(50,0)					NOT NULL
         , CountryCode			VARCHAR(10)						NULL
         , CountryName			VARCHAR(80)						NULL
         , Region				VARCHAR(128)					NULL
         , City					VARCHAR(50)						NULL
         , ISPName				VARCHAR(256)					NULL
         , Status				TINYINT(1)        				COMMENT '0: Inactive; 1: Active'
-        , CreatedDate			BIGINT
+        , CreatedDate			DATETIME
         
         , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeLocationID)
-        , INDEX			IX_IPRangeLocation_FromIP_ToIP(IPType,FromIP,ToIP)
+        , INDEX			IX_IPRangeLocation_FromIP_ToIP(FromIP,ToIP)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======UserAgent============================================
 	CREATE TABLE FPS_DataCenter.UserAgent(
 		UserAgentID		INT				AUTO_INCREMENT	NOT NULL
-		, UserAgent		VARCHAR(500)					NOT NULL
-		, UserAgentCode	VARCHAR(32)						NOT NULL
+		, UserAgent		TEXT							NOT NULL
+		, UserAgentCode	VARCHAR(64)						NOT NULL
         , BrowserID		TINYINT(2)						NOT NULL
         , OSID			TINYINT(2)						NULL
         
@@ -184,7 +186,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, EvidenceGroupName		VARCHAR(50)							NOT NULL
 		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8	NULL
 		, OrderNo				SMALLINT							NULL
-		, CreatedDate			BIGINT							NOT NULL
+		, CreatedDate			DATETIME							NOT NULL
 		, CreatedBy				INT									NOT NULL
 		, IsActive				TINYINT(1)							NOT NULL
         
@@ -199,7 +201,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, EvidenceTypeName	VARCHAR(50)							NOT NULL
 		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET utf8	NULL
 		, OrderNo			SMALLINT							NOT NULL
-		, CreatedDate		BIGINT							NOT NULL
+		, CreatedDate		DATETIME							NOT NULL
 		, CreatedBy			INT									NOT NULL
 		, IsActive			TINYINT(1)							NOT NULL
         
@@ -219,7 +221,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, TargetLevel		TINYINT								NOT NULL
 		, CentralPointID	BIGINT								NOT NULL
 		, SubscriberID		INT									NOT NULL
-		, CreatedDate		BIGINT							NOT NULL
+		, CreatedDate		DATETIME							NOT NULL
 		, CreatedBy			INT									NOT NULL
 		, IsCreatedByMaster	TINYINT(1)							NOT NULL
 		, IsActive			TINYINT(1)							NOT NULL
@@ -235,7 +237,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, AccountID		BIGINT								NOT NULL
 		, SubscriberID	SMALLINT							NOT NULL
 		, Remark		VARCHAR(200)	CHARACTER SET utf8	NULL
-		, CreatedDate	BIGINT							NOT NULL
+		, CreatedDate	DATETIME							NOT NULL
 		, CreatedBy		INT									NOT NULL
 		, IsActive		TINYINT(1)							NOT NULL
         
@@ -258,7 +260,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, SPName		VARCHAR(100)						NULL
 		, SubscriberID	INT									NULL
 		, LogInfo		VARCHAR(500)	CHARACTER SET utf8	NULL
-		, CreatedDate	BIGINT							NULL
+		, CreatedDate	DATETIME							NULL
 		, CreatedBy		INT									NULL
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
@@ -266,12 +268,11 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 
 CREATE TABLE FPS_DataCenter.IPTableLog(
 	IPTableLogID			INT 		AUTO_INCREMENT
-	, IPType				TINYINT						COMMENT '0: Update IPV4 table IP2Location, 1: IPV6 Table IPV6Location'
-	, UpdatedDate			BIGINT
-	, IsNewUpdate			BIT							COMMENT	'0: old, 1: New'
+	, UpdatedDate			DATETIME	#DECIMAL(20,10)
+	, IsNewUpdate			TINYINT(1)							COMMENT	'0: old, 1: New'
 	
     , PRIMARY KEY	PK_IPTableLog_IPTableLogID(IPTableLogID)
-	, INDEX IX_IPTableLog_IPType_Flag (IPType, IsNewUpdate)
+	, INDEX IX_IPTableLog_IPType_Flag (IsNewUpdate)
 );
 # ===================================================
 
