@@ -55,30 +55,32 @@ BEGIN
 		,	currentTime
 		,	ip_createdBy);
     ELSE		
-		DROP TEMPORARY TABLE IF EXISTS tmp_SubscriberId;
-		CREATE TEMPORARY TABLE tmp_SubscriberId( userId INT, subId INT );
-		SET @sql = CONCAT("INSERT INTO tmp_SubscriberId (subId) VALUES ('", REPLACE(ip_subscriberIds, ",", "'),('"),"');");
-		PREPARE stmt1 from @sql;
-		EXECUTE stmt1;
-        
-		UPDATE tmp_SubscriberId
-		SET userId = ip_userId;		
-		
-		INSERT INTO FPS_Admin.UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
-		SELECT userId, subId, NOW(), ip_createdBy FROM tmp_SubscriberId;
-        
-        INSERT INTO `FPS_Admin`.`UserLog`(
-			`LogTypeID`
-		,	`SPName`
-		,	`LogInfo`
-		,	`CreatedDate`
-		,	`CreatedBy`)
-		VALUES(
-			1
-		,	'FPS_AD_InsertSubscriberByUser'
-        ,	CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: ', ip_subscriberIds)
-		,	currentTime
-		,	ip_createdBy);
+		IF ip_subscriberIds <> '' THEN
+			DROP TEMPORARY TABLE IF EXISTS tmp_SubscriberId;
+			CREATE TEMPORARY TABLE tmp_SubscriberId( userId INT, subId INT );
+			SET @sql = CONCAT("INSERT INTO tmp_SubscriberId (subId) VALUES ('", REPLACE(ip_subscriberIds, ",", "'),('"),"');");
+			PREPARE stmt1 from @sql;
+			EXECUTE stmt1;
+			
+			UPDATE tmp_SubscriberId
+			SET userId = ip_userId;		
+			
+			INSERT INTO FPS_Admin.UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
+			SELECT userId, subId, NOW(), ip_createdBy FROM tmp_SubscriberId;
+			
+			INSERT INTO `FPS_Admin`.`UserLog`(
+				`LogTypeID`
+			,	`SPName`
+			,	`LogInfo`
+			,	`CreatedDate`
+			,	`CreatedBy`)
+			VALUES(
+				1
+			,	'FPS_AD_InsertSubscriberByUser'
+			,	CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: ', ip_subscriberIds)
+			,	currentTime
+			,	ip_createdBy);
+		END IF;
     END IF;
 END$$
 
