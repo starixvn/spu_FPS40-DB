@@ -1,7 +1,7 @@
 /*
 	Created: 20190610@Casey.Huynh
 	Task : Get Transaction List has not transferred (processed) to FPS_DataCenter DB
-	DB: FPS_StagingRawTrans
+	DB: FPS_RawTransaction(Staging)
 	Original:
 
 	Revisions:
@@ -10,7 +10,9 @@
 
 DELIMITER $$
 
-CREATE PROCEDURE FPS_StagingRawTrans.FPS_ST_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1), IN ip_NoOfTickets INT)
+USE FPS_RawTransaction$$
+
+CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1), IN ip_NoOfTickets INT)
 BEGIN
   
     # RETURN Transaction List
@@ -20,7 +22,6 @@ BEGIN
 			, st.TransDate
 			, st.CreatedDate
             , st.DeviceCode
-            , st.DeviceCodeStatus
 			, st.FingeringCode
 			, st.FingeringMoreInfo
 			, st.UserAgent
@@ -29,7 +30,7 @@ BEGIN
 			, st.URL
 			, st.ActionResult
 			
-	FROM 	FPS_StagingRawTrans.RawTransaction AS st
+	FROM 	FPS_RawTransaction.RawTransaction AS st
 	WHERE	st.IsProcessed = ip_IsProcessed
     LIMIT	ip_NoOfTickets;
 

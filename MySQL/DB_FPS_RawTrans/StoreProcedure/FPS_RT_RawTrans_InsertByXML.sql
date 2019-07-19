@@ -11,9 +11,7 @@
 DELIMITER $$
 USE FPS_RawTrans$$
 
-DROP PROCEDURE IF EXISTS FPS_RawTrans.FPS_RT_RawTrans_InsertByXML$$
-
-CREATE PROCEDURE FPS_RawTrans.FPS_RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
+CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
 BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
@@ -27,7 +25,6 @@ BEGIN
 		, SubscriberName			VARCHAR(50) 					NOT NULL
 		, TransDate					DATETIME 						NOT NULL
 		, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
-        , DeviceCodeStatus			TINYINT 						NULL		COMMENT 'Old, New'
 		, FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'
 		, FingeringMoreInfo			TEXT		 				NULL
 		, UserAgent					VARCHAR(500) 					NULL
@@ -51,7 +48,6 @@ BEGIN
 			, SubscriberName
             , TransDate
             , DeviceCode
-            , DeviceCodeStatus
             , FingeringCode
             , FingeringMoreInfo
             , UserAgent
@@ -66,7 +62,6 @@ BEGIN
          , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
          , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::TransDate'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCodeStatus'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingeringCode'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingeringMoreInfo'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
@@ -78,13 +73,12 @@ BEGIN
 		
 	END WHILE;
     
-    INSERT INTO FPS_RawTrans.RawTransaction
+    INSERT INTO FPS_RawTransaction.RawTransaction
 	(	LoginName
 		, SubscriberName
 		, TransDate
 		, CreatedDate
 		, DeviceCode
-        , DeviceCodeStatus
 		, FingeringCode
 		, FingeringMoreInfo
 		, UserAgent
@@ -99,7 +93,6 @@ BEGIN
 		, rt.TransDate
 		, DATE(rt.TransDate) AS CreatedDate
 		, rt.DeviceCode
-        , rt.DeviceCodeStatus
 		, rt.FingeringCode
 		, rt.FingeringMoreInfo
 		, rt.UserAgent

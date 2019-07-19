@@ -1,10 +1,20 @@
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Merge List A and List B. 
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 DELIMITER $$
 USE `FPS_DataCenter`$$
 
-DROP FUNCTION IF EXISTS `DC_MergeLists`$$
+DROP FUNCTION IF EXISTS `FPS_DC_MergeLists`$$
 
 
-CREATE FUNCTION DC_MergeLists (ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000))
+CREATE FUNCTION FPS_DC_MergeLists (ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000))
 
 RETURNS NVARCHAR(5000)
 
@@ -40,7 +50,7 @@ BEGIN
 		SET i = i+1;
 
 		-- Split based on " & "
-		SET str = DC_SPLITSTRING(ip_List01,ip_seperator,i);
+		SET str = FPS_DC_SPLITSTRING(ip_List01,ip_seperator,i);
 		IF str = '' THEN
 		LEAVE SIMPLE_LOOP;
 		END IF;
@@ -63,7 +73,7 @@ BEGIN
 		SET i = i+1;
 
 		-- Split based on " & "
-		SET str = DC_SPLITSTRING(ip_List02,ip_seperator,i);
+		SET str = FPS_DC_SPLITSTRING(ip_List02,ip_seperator,i);
 		IF str = '' THEN
 		LEAVE SIMPLE_LOOP;
 		END IF;

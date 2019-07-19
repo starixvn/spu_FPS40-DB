@@ -7,15 +7,14 @@ DBName:	 FPS_DataCenter
 Reviewer: Billy
 */
 
-CREATE DATABASE IF NOT EXISTS FPS_RawTrans;
+CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 
-CREATE TABLE FPS_RawTrans.RawTransaction (
+CREATE TABLE FPS_RawTransaction.RawTransaction (
 	LoginName					VARCHAR(50) CHARACTER SET utf8	NOT NULL	COMMENT 'NVARCHAR'
 	, SubscriberName			VARCHAR(50) 					NOT NULL
 	, TransDate					DATETIME	 					NOT NULL
 	, CreatedDate				DATETIME	 					NOT NULL	COMMENT 'Date Only'
 	, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
-    , DeviceCodeStatus			TINYINT 						NULL		COMMENT '0: NULL, 1: New, 2: OLD'
     , FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'    
     , FingeringMoreInfo			TEXT		 					NULL
     , UserAgent					TEXT		 					NULL

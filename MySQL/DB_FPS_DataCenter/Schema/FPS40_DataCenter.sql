@@ -99,7 +99,6 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 		, IP				DECIMAL(50,0)						NULL
         , IPRangeLocationID	BIGINT								NULL
 		, PluginID			BIGINT								NULL
-		, DeviceStatus		TINYINT(1)							NULL		COMMENT 'new, old, retrieve'	NOT	NULL
 		, Flagged			TINYINT(2)							NULL		COMMENT 'captcha & browserless'
 		, SubURLID			SMALLINT							NULL
 		, ActionResultID	TINYINT(2)							NULL
