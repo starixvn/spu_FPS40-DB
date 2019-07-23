@@ -23,6 +23,7 @@ BEGIN
 	CREATE TEMPORARY TABLE temp_Accounts (
 		 LoginName	VARCHAR(50)
 		,SubName	VARCHAR(50)
+        ,StagingID	BIGINT(20)
 	);
     
 	SET RowCount = EXTRACTVALUE(ip_AccountListXML,'count(//root/account)');     
@@ -38,20 +39,24 @@ BEGIN
 		(	
 			 LoginName
 			,SubName
+            ,StagingID
 		)
 		VALUES
 		( 
 			 EXTRACTVALUE(ip_AccountListXML,CONCAT(XpathRow,'/attribute::LoginName'))
 			,EXTRACTVALUE(ip_AccountListXML,CONCAT(XpathRow,'/attribute::SubName'))
+            ,EXTRACTVALUE(ip_AccountListXML,CONCAT(XpathRow,'/attribute::StagingID'))
 		);
 		
 	END WHILE;
     
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
     
-    SELECT 	 LoginName
+    SELECT 	 StagingID
+			,LoginName
 			,SubName 'SubscriberName'
             ,sub.SubscriberID
+            ,acc.AccountID
 			,CASE WHEN acc.AccountID IS NULL then 0 ELSE 1 END 'IsExisted'
     FROM temp_Accounts ta 
 		INNER JOIN FPS_Admin.Subscriber sub ON sub.SubscriberName = ta.SubName

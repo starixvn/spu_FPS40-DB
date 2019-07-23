@@ -16,7 +16,7 @@ BEGIN
 	*/    
 
 	DECLARE currentTime DATETIME DEFAULT NOW();
-    DECLARE listSubForDelete VARCHAR(100);
+    DECLARE listSubForDelete VARCHAR(1000);
     
     SELECT CONCAT_WS(',', GROUP_CONCAT(SubscriberID)) 
     FROM FPS_Admin.UserSubscriber
