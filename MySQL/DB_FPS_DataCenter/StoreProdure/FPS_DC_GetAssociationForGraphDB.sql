@@ -11,8 +11,7 @@ DELIMITER $$
 USE FPS_DataCenter$$
 
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT(1), IN ip_Size INT)
-BEGIN
-	
+BEGIN	
     #=========================================================================================
     DROP TABLE IF EXISTS Temp_Association;
 	
@@ -32,6 +31,8 @@ BEGIN
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL        
 	);    
 	   
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
+
 	#=======GET Associate List to insert into GraphDB=================================================================================================================	
 	INSERT INTO Temp_Association(AssociationID, DeviceID, AccountID, SubscriberID, SubscriberName, IsDeposit, CustID, Username, Username2, RoleID, CurrencyID, CurrencyName)
 	SELECT	ass.AssociationID
@@ -70,6 +71,7 @@ BEGIN
 			, tas.CurrencyName
     FROM	Temp_Association tas;
     
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
 END$$
 DELIMITER ;
 
