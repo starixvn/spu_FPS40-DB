@@ -40,7 +40,7 @@ BEGIN
     
     IF ip_isMasterSub = 1 THEN
 		INSERT INTO FPS_Admin.UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
-		SELECT ip_userId, 0, NOW(), ip_createdBy;
+		SELECT ip_userId, -1, NOW(), ip_createdBy;
         
         INSERT INTO `FPS_Admin`.`UserLog`(
 			`LogTypeID`
@@ -51,7 +51,7 @@ BEGIN
 		VALUES(
 			1
 		,	'FPS_AD_InsertSubscriberByUser'
-		,	CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: 0 (Master Sub)')
+		,	CONCAT('INSERT UserSubscriber Table - UserID: ', ip_userId, ' - List Subs: -1 (Master Sub)')
 		,	currentTime
 		,	ip_createdBy);
     ELSE		

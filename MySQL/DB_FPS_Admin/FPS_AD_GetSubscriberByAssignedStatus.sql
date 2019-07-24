@@ -15,11 +15,12 @@ BEGIN
 		Param's Explanation (filtered by):
 	*/
     
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
-    
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;        
+
     SELECT	sub.SubscriberID
 		,	sub.SubscriberName
 		,	CASE WHEN us.UserID IS NOT NULL THEN 1 ELSE 0 END AS 'isAssigned'
+        ,	EXISTS(SELECT UserID FROM FPS_Admin.UserSubscriber us WHERE UserID = ip_userId AND SubscriberID = -1) 'IsMaster'
 	FROM FPS_Admin.Subscriber sub 
     LEFT JOIN FPS_Admin.UserSubscriber us ON sub.SubscriberID = us.SubscriberID AND us.UserID = ip_userId
 	WHERE us.UserID = ip_userId OR us.UserID IS NULL AND sub.IsTest = 0 AND sub.Status = 1;
