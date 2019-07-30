@@ -8,8 +8,43 @@ Reviewer:
 */
 
 CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
+CREATE TABLE FPS_DataCenter.Device(
+		DeviceID				BIGINT 			AUTO_INCREMENT		
+		, DeviceCode			VARCHAR(320) 	NULL
+        , FingeringCode			VARCHAR(320) 	NULL
+        , FingeringMoreInfo		TEXT			NULL
+        , StagingTransID		BIGINT			NULL
+        , UserAgentID			INT				NULL
+        , PluginID				INT				NULL
+        , FirstAccountID		BIGINT			NULL
+        , CreatedDate			DATETIME		NULL
+        , DeviceStatus			TINYINT(1)
+        
+        , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
+        , INDEX			IX_Device_CreatedDate(CreatedDate)
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+
+
+/*
+CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
+CREATE TABLE FPS_DataCenter.Device(
+		DeviceID				BIGINT 			AUTO_INCREMENT		
+		, DeviceCode			VARCHAR(320) 	NULL
+        , FingeringCode			VARCHAR(320) 	NULL
+        , FingeringMoreInfo		TEXT			NULL
+        , StagingTransID		BIGINT			NULL
+        , UserAgentID			INT				NULL
+        , PluginID				INT				NULL
+        , FirstAccountID		BIGINT			NULL
+        , CreatedDate			DATETIME		NULL
+        , DeviceStatus			TINYINT(1)
+        
+        , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
+        , INDEX			IX_Device_CreatedDate(CreatedDate)
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+*/
 # ======Device============================================
-	CREATE TABLE FPS_DataCenter.Device(
+	/*CREATE TABLE FPS_DataCenter.Device(
 		DeviceID				BIGINT 			AUTO_INCREMENT		
 		, FirstDeviceCode		VARCHAR(32) 	NULL
         , FirstFingeringCode	VARCHAR(320) 	NULL
@@ -21,7 +56,7 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
         , INDEX			IX_Device_CreatedDate(CreatedDate)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
-
+	*/
 # ======Device=============================================
 	CREATE TABLE FPS_DataCenter.DeviceCode(
 		 
@@ -81,8 +116,8 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         
         , PRIMARY KEY	PK_Account_AccountID(AccountID)        
         , INDEX			IX_Account_CustID(CustID)
-        , INDEX			IX_Account_Username(SubscriberID, Username)
-        , INDEX			IX_Account_Username2(SubscriberID, Username2)
+        , INDEX			IX_Account_SubscriberID_Username(SubscriberID, Username)
+        , INDEX			IX_Account_SubscriberID_Username2(SubscriberID, Username2)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Transactions============================================
@@ -158,13 +193,14 @@ CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
         , CountryCode			VARCHAR(10)						NULL
         , CountryName			VARCHAR(80)						NULL
         , Region				VARCHAR(128)					NULL
-        , City					VARCHAR(50)						NULL
+        , City					VARCHAR(100)						NULL
         , ISPName				VARCHAR(256)					NULL
         , Status				TINYINT(1)        				COMMENT '0: Inactive; 1: Active'
         , CreatedDate			DATETIME
         
         , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeLocationID)
         , INDEX			IX_IPRangeLocation_FromIP_ToIP(FromIP,ToIP)
+        , INDEX 		IX_IPRangeLocation_IPRangeLocationCode(IPRangeLocationCode)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======UserAgent============================================

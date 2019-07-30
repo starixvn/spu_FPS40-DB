@@ -11,7 +11,7 @@
 DELIMITER $$
 USE FPS_DataCenter$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_IPRangeLocation_UpdateByXML(IN ip_UpdatedDate DATETIME, IN ip_IPRangeLocationXml LONGTEXT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_IPRangeLocation_UpdateByXML_Old(IN ip_UpdatedDate DATETIME, IN ip_IPRangeLocationXml LONGTEXT)
 BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
@@ -19,7 +19,12 @@ BEGIN
 	DECLARE XpathRow VARCHAR(255);
 
  # exmp ip_UpdatedDate= '2019-07-15 00:00:00'
-        
+	DECLARE StartTime			DATETIME;
+    DECLARE ENDTime				DATETIME;
+    DECLARE SPNAME VARCHAR(255) DEFAULT  'FPS_DC_IPRangeLocation_UpdateByXML_Old';
+    SET StartTime	= current_timestamp();
+   
+    
     DROP TABLE IF EXISTS Temp_IPRangeLocation;    
 	CREATE TEMPORARY TABLE Temp_IPRangeLocation (
 		IPRangeLocationCode		VARCHAR(64)			NOT NULL
@@ -31,6 +36,13 @@ BEGIN
         , City					VARCHAR(50)			NULL
         , ISPName				VARCHAR(256)		NULL
      );
+	
+    /*TraceTimePerformance: Start*/
+	SET EndTime	= current_timestamp();
+    INSERT INTO FPS_DataCenter.zzTracePerformance(SPName,Step,StartTime,EndTime,Duration)
+    VALUES(SPName,1,StartTime, EndTime,SECOND(TIMEDIFF(EndTime,StartTime)));
+	SET StartTime	= current_timestamp();
+	/*TraceTimePerformance: END*/
     
 	SET RowCount = EXTRACTVALUE(ip_IPRangeLocationXml,'count(//root/ip)');     
     
@@ -64,19 +76,42 @@ BEGIN
 		);
 		
 	END WHILE;
-   
+    
+	/*TraceTimePerformance: Start*/
+	SET EndTime	= current_timestamp();
+    INSERT INTO FPS_DataCenter.zzTracePerformance(SPName,Step,StartTime,EndTime,Duration)
+    VALUES(SPName,2,StartTime, EndTime,SECOND(TIMEDIFF(EndTime,StartTime)));
+	SET StartTime	= current_timestamp();
+    
+	/*TraceTimePerformance: END*/
+    
 	# Remove IPRangeLocation that not change from temp data
     DELETE 	tip
     FROM 		Temp_IPRangeLocation tip
-	INNER JOIN	IPRangeLocation ip
+	INNER JOIN	FPS_DataCenter.IPRangeLocation ip
 				ON tip.IPRangeLocationCode = ip.IPRangeLocationCode;
+                
+    /*TraceTimePerformance: Start*/            
+	SET EndTime	= current_timestamp();
+    INSERT INTO FPS_DataCenter.zzTracePerformance(SPName,Step,StartTime,EndTime,Duration)
+    VALUES(SPName,3,StartTime, EndTime,SECOND(TIMEDIFF(EndTime,StartTime)));
+	SET StartTime	= current_timestamp();
+	/*TraceTimePerformance: END*/
 	# 
-	UPDATE  	IPRangeLocation ip
+	UPDATE  	FPS_DataCenter.IPRangeLocation ip
 	INNER JOIN	Temp_IPRangeLocation tip
 				ON ip.FromIP 	= tip.FromIP
                 AND ip.ToIP		= tip.ToIP
 	SET			ip.Status = 0
 	WHERE  		ip.Status = 1; 
+	
+    
+       /*TraceTimePerformance: Start*/
+	SET EndTime	= current_timestamp();
+    INSERT INTO FPS_DataCenter.zzTracePerformance(SPName,Step,StartTime,EndTime,Duration)
+    VALUES(SPName,4,StartTime, EndTime,SECOND(TIMEDIFF(EndTime,StartTime)));
+	SET StartTime	= current_timestamp();
+	/*TraceTimePerformance: END*/
     
     # Insert New IPRangeLocation
     INSERT INTO FPS_DataCenter.IPRangeLocation
@@ -104,7 +139,13 @@ BEGIN
 			, 1 AS Status 
             , ip_UpdatedDate AS CreatedDate
 	FROM	Temp_IPRangeLocation tip;
-
+	
+       /*TraceTimePerformance: Start*/
+	SET EndTime	= current_timestamp();
+    INSERT INTO FPS_DataCenter.zzTracePerformance(SPName,Step,StartTime,EndTime,Duration)
+    VALUES(SPName,5,StartTime, EndTime,SECOND(TIMEDIFF(EndTime,StartTime)));
+	SET StartTime	= current_timestamp();
+	/*TraceTimePerformance: END*/
 
 END$$
 DELIMITER ;

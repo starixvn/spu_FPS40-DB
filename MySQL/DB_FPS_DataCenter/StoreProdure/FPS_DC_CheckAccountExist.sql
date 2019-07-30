@@ -50,17 +50,23 @@ BEGIN
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
     
     SELECT 	 ta.LoginName
-            ,(CASE WHEN sub.IsDeposit = 1 THEN CONCAT(sub.SubscriberPrefix, ta.LoginName) 
-					ELSE ta.LoginName END) AS LoginNameWithPrefix
+			,CONCAT(sub.SubscriberPrefix, ta.LoginName)  AS LoginNameWithPrefix
 			,ta.SubName 'SubscriberName'
             ,sub.SubscriberName
             ,sub.SubscriberID
+            ,sub.IsDeposit
             ,acc.AccountID
 			,CASE WHEN acc.AccountID IS NULL then 0 ELSE 1 END 'IsExisted'
-    FROM temp_Accounts ta 
-		LEFT JOIN FPS_Admin.Subscriber sub ON sub.SubscriberName = ta.SubName
-        LEFT JOIN Account acc ON ta.LoginName = acc.FirstLoginName AND sub.SubscriberID = acc.SubscriberID;
-	
+    FROM 		temp_Accounts ta 
+	LEFT JOIN	FPS_Admin.Subscriber sub 
+				ON sub.SubscriberName = ta.SubName AND sub.Status != 2
+	LEFT JOIN	FPS_DataCenter.Account AS acc
+				ON	sub.SubscriberID = acc.SubscriberID
+					AND	( 	ta.LoginName = acc.FirstLoginName
+							OR ta.LoginName = acc.UserName
+                            OR CONCAT(sub.SubScriberPrefix,ta.LoginName) = acc.Username2
+						);	  
+    
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
 END$$
 DELIMITER ;
