@@ -1,8 +1,8 @@
 DELIMITER $$
-USE `FPS_Admin`$$
-DROP PROCEDURE IF EXISTS `FPS_AD_InsertSubscriberByUser` $$
+USE FPS_Admin$$
+DROP PROCEDURE IF EXISTS FPS_AD_InsertSubscriberByUser $$
 
-CREATE PROCEDURE `FPS_AD_InsertSubscriberByUser` (IN ip_isMasterSub BIT, IN ip_subscriberIds LONGTEXT, IN ip_userId INT, IN ip_createdBy INT)
+CREATE PROCEDURE FPS_AD_InsertSubscriberByUser (IN ip_isMasterSub BIT, IN ip_subscriberIds LONGTEXT, IN ip_userId INT, IN ip_createdBy INT)
 BEGIN
 	/*
 		Created:	20190715@Harvey
@@ -13,24 +13,26 @@ BEGIN
 		Revisions: 
 		Param's Explanation (filtered by):
 	*/    
-    
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;     
 
 	DECLARE currentTime DATETIME DEFAULT NOW();
     DECLARE listSubForDelete VARCHAR(1000);
     
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+    
     SELECT CONCAT_WS(',', GROUP_CONCAT(SubscriberID)) 
-    FROM FPS_Admin.UserSubscriber
+    FROM UserSubscriber
 	WHERE userid = ip_userId
     INTO listSubForDelete;
+    
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 
-    DELETE FROM FPS_Admin.UserSubscriber WHERE UserID = ip_userId;
-    INSERT INTO `FPS_Admin`.`UserLog`(
-			`LogTypeID`
-		,	`SPName`
-		,	`LogInfo`
-		,	`CreatedDate`
-		,	`CreatedBy`)
+    DELETE FROM UserSubscriber WHERE UserID = ip_userId;
+    INSERT INTO UserLog(
+			LogTypeID
+		,	SPName
+		,	LogInfo
+		,	CreatedDate
+		,	CreatedBy)
 		VALUES(
 			3
 		,	'FPS_AD_InsertSubscriberByUser'
@@ -40,15 +42,15 @@ BEGIN
 
     
     IF ip_isMasterSub = 1 THEN
-		INSERT INTO FPS_Admin.UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
+		INSERT INTO UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
 		SELECT ip_userId, -1, NOW(), ip_createdBy;
         
-        INSERT INTO `FPS_Admin`.`UserLog`(
-			`LogTypeID`
-		,	`SPName`
-		,	`LogInfo`
-		,	`CreatedDate`
-		,	`CreatedBy`)
+        INSERT INTO UserLog(
+			LogTypeID
+		,	SPName
+		,	LogInfo
+		,	CreatedDate
+		,	CreatedBy)
 		VALUES(
 			1
 		,	'FPS_AD_InsertSubscriberByUser'
@@ -66,15 +68,15 @@ BEGIN
 			UPDATE tmp_SubscriberId
 			SET userId = ip_userId;		
 			
-			INSERT INTO FPS_Admin.UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
+			INSERT INTO UserSubscriber (UserID, SubscriberID, CreatedDate, CreatedBy)
 			SELECT userId, subId, NOW(), ip_createdBy FROM tmp_SubscriberId;
 			
-			INSERT INTO `FPS_Admin`.`UserLog`(
-				`LogTypeID`
-			,	`SPName`
-			,	`LogInfo`
-			,	`CreatedDate`
-			,	`CreatedBy`)
+			INSERT INTO UserLog(
+				LogTypeID
+			,	SPName
+			,	LogInfo
+			,	CreatedDate
+			,	CreatedBy)
 			VALUES(
 				1
 			,	'FPS_AD_InsertSubscriberByUser'
@@ -82,9 +84,7 @@ BEGIN
 			,	currentTime
 			,	ip_createdBy);
 		END IF;
-    END IF;
-    
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    END IF;    
 END$$
 
 DELIMITER ;
