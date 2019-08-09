@@ -3,7 +3,7 @@ DROP PROCEDURE IF EXISTS `FPS_AD_InsertSubscriberByUser`;
 
 DELIMITER $$
 USE `FPS_Admin`$$
-CREATE PROCEDURE `FPS_AD_InsertSubscriberByUser` (IN ip_isMasterSub BIT, IN ip_subscriberIds LONGTEXT, IN ip_userId INT(11), IN ip_createdBy INT(11))
+CREATE PROCEDURE `FPS_AD_InsertSubscriberByUser` (IN ip_isMasterSub BIT, IN ip_subscriberIds LONGTEXT, IN ip_userId INT, IN ip_createdBy INT)
 BEGIN
 	/*
 		Created:	20190715@Harvey

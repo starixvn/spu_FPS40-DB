@@ -3,7 +3,7 @@ DROP PROCEDURE IF EXISTS `FPS_AD_GetSubscriberByAssignedStatus`;
 
 DELIMITER $$
 USE `FPS_Admin`$$
-CREATE PROCEDURE `FPS_AD_GetSubscriberByAssignedStatus` (IN ip_userId INT(11))
+CREATE PROCEDURE `FPS_AD_GetSubscriberByAssignedStatus` (IN ip_userId INT)
 BEGIN
 	/*
 		Created:	20190715@Harvey
