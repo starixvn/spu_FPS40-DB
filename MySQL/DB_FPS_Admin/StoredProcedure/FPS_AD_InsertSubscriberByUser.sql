@@ -1,8 +1,7 @@
-USE `FPS_Admin`;
-DROP PROCEDURE IF EXISTS `FPS_AD_InsertSubscriberByUser`;
-
 DELIMITER $$
 USE `FPS_Admin`$$
+DROP PROCEDURE IF EXISTS `FPS_AD_InsertSubscriberByUser` $$
+
 CREATE PROCEDURE `FPS_AD_InsertSubscriberByUser` (IN ip_isMasterSub BIT, IN ip_subscriberIds LONGTEXT, IN ip_userId INT, IN ip_createdBy INT)
 BEGIN
 	/*
@@ -14,6 +13,8 @@ BEGIN
 		Revisions: 
 		Param's Explanation (filtered by):
 	*/    
+    
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;     
 
 	DECLARE currentTime DATETIME DEFAULT NOW();
     DECLARE listSubForDelete VARCHAR(1000);
@@ -82,6 +83,8 @@ BEGIN
 			,	ip_createdBy);
 		END IF;
     END IF;
+    
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 
 DELIMITER ;
