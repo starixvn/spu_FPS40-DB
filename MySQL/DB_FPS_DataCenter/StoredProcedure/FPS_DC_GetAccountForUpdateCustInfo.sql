@@ -9,11 +9,11 @@
 */
 
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetNewCustomer`;
+DROP procedure IF EXISTS `FPS_DC_GetAccountForUpdateCustInfo`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetNewCustomer` (in ip_Size int)
+CREATE PROCEDURE `FPS_DC_GetAccountForUpdateCustInfo` (in ip_Size int)
 BEGIN
 	   
     SELECT acc.AccountID

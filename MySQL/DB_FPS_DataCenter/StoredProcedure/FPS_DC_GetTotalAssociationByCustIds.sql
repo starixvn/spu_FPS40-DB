@@ -9,11 +9,11 @@
 */
 
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetTotalAssociationByCustomers`;
+DROP procedure IF EXISTS `FPS_DC_GetTotalAssociationByCustIds`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetTotalAssociationByCustomers` (in custIds LONGTEXT, in roleId TINYINT)
+CREATE PROCEDURE `FPS_DC_GetTotalAssociationByCustIds` (in custIds LONGTEXT, in roleId TINYINT)
 BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
@@ -26,11 +26,11 @@ BEGIN
     SELECT 
 		 acc.CustID
 		,COUNT(DISTINCT acc2.CustID) 'TotalAssociation'
-	FROM Account acc
+	FROM FPS_DataCenter.Account acc
 		INNER JOIN tmp_CustId cus ON acc.CustID = cus.CustID
-		INNER JOIN Association ass ON acc.AccountID = ass.AccountID AND acc.SubscriberID = ass.SubscriberID
-		INNER JOIN Association ass2 ON ass.DeviceID = ass2.DeviceID
-		INNER JOIN Account acc2 ON acc2.AccountID = ass2.AccountID AND acc2.SubscriberID = ass2.SubscriberID
+		INNER JOIN FPS_DataCenter.Association ass ON acc.AccountID = ass.AccountID AND acc.SubscriberID = ass.SubscriberID
+		INNER JOIN FPS_DataCenter.Association ass2 ON ass.DeviceID = ass2.DeviceID
+		INNER JOIN FPS_DataCenter.Account acc2 ON acc2.AccountID = ass2.AccountID AND acc2.SubscriberID = ass2.SubscriberID
 	WHERE acc.CustID <> acc2.CustID AND acc2.RoleID = roleId
     GROUP BY acc.CustID;
 

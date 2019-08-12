@@ -9,11 +9,11 @@
 */
 
 USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetEvidencesByCustomers`;
+DROP PROCEDURE IF EXISTS `FPS_DC_GetEvidencesByCustIds`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetEvidencesByCustomers` (in custIds LONGTEXT, in evidences LONGTEXT)
+CREATE PROCEDURE `FPS_DC_GetEvidencesByCustIds` (in custIds LONGTEXT, in evidences LONGTEXT)
 BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
@@ -31,16 +31,16 @@ BEGIN
 	
     IF evidences = '' then
 		SELECT evi.TargetID, evi.EvidenceCode, eviType.EvidenceTypeName
-		FROM TargetEvidence evi
+		FROM FPS_DataCenter.TargetEvidence evi
 			INNER JOIN tmp_CustId tmpCust ON tmpCust.custId = evi.TargetID
-            INNER JOIN EvidenceType eviType ON evi.EvidenceTypeID = eviType.EvidenceTypeID
+            INNER JOIN FPS_DataCenter.EvidenceType eviType ON evi.EvidenceTypeID = eviType.EvidenceTypeID
 		WHERE evi.TargetType = 0 AND evi.IsActive = 1;
 	ELSE
 		SELECT evi.TargetID, evi.EvidenceCode, eviType.EvidenceTypeName
-		FROM TargetEvidence evi
+		FROM FPS_DataCenter.TargetEvidence evi
 			INNER JOIN tmp_CustId tmpCust ON tmpCust.custId = evi.TargetID
 			INNER JOIN tmp_EviCodes tmpEvi ON evi.EvidenceCode = tmpEvi.evicode
-			INNER JOIN EvidenceType eviType ON evi.EvidenceTypeID = eviType.EvidenceTypeID
+			INNER JOIN FPS_DataCenter.EvidenceType eviType ON evi.EvidenceTypeID = eviType.EvidenceTypeID
 		WHERE evi.TargetType = 0 AND evi.IsActive = 1;
 	END IF ;
   
