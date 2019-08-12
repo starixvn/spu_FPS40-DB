@@ -23,8 +23,7 @@ BEGIN
         ,	EXISTS(SELECT UserID FROM dbo.UserSubscriber us WHERE UserID = ip_userId AND SubscriberID = -1) 'IsMaster'
 	FROM dbo.Subscriber sub 
 		LEFT JOIN dbo.UserSubscriber us ON sub.SubscriberID = us.SubscriberID AND us.UserID = ip_userId
-	WHERE us.UserID = ip_userId 
-		OR us.UserID IS NULL 
+	WHERE (us.UserID IS NULL OR us.UserID = ip_userId)
         AND sub.IsTest = 0 
         AND sub.Status = 1;
     
