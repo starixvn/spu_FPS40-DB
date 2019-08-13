@@ -2,7 +2,7 @@ DELIMITER $$
 USE FPS_DataCenter $$
 DROP PROCEDURE IF EXISTS FPS_DC_SearchAccount $$
 
-CREATE PROCEDURE FPS_DC_SearchAccount(IN ip_SubscriberIDs LONGTEXT, IN ip_Username VARCHAR(50))
+CREATE PROCEDURE FPS_DC_SearchAccount(IN ip_SubscriberIDs LONGTEXT, IN ip_Username VARCHAR(50), IN ip_userId INT)
 BEGIN
 	/*
 		Created:	20190812@Long.Luu
@@ -16,12 +16,27 @@ BEGIN
 	*/
 	
     DROP TEMPORARY TABLE IF EXISTS tmp_SubscriberList;
-	CREATE TEMPORARY TABLE tmp_SubscriberList( SubscriberID INT );
-	SET @sql = CONCAT("INSERT INTO tmp_SubscriberList (SubscriberID) VALUES ('", REPLACE(ip_SubscriberIDs, ",", "'),('"),"');");
-	PREPARE stmt1 from @sql;
-	EXECUTE stmt1;
+	CREATE TEMPORARY TABLE tmp_SubscriberList( SubscriberID INT, SubscriberName VARCHAR(30) );
     
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+	
+    IF ip_SubscriberIDs = '-1' THEN
+		INSERT INTO tmp_SubscriberList (SubscriberID, SubscriberName)
+        SELECT sub.SubscriberID, sub.SubscriberName
+        FROM FPS_Admin.Subscriber AS sub
+			INNER JOIN FPS_Admin.UserSubscriber AS us ON us.UserID = ip_userId AND (us.SubscriberID = -1 OR sub.SubscriberID = us.SubscriberID)
+		WHERE sub.IsTest = 0 
+			AND sub.Status = 1;
+    ELSE
+		SET @sql = CONCAT("INSERT INTO tmp_SubscriberList (SubscriberID) VALUES ('", REPLACE(ip_SubscriberIDs, ",", "'),('"),"');");
+		PREPARE stmt1 from @sql;
+		EXECUTE stmt1;    
+        
+        UPDATE tmp_SubscriberList AS tsl,
+			FPS_Admin.Subscriber AS sub
+		SET tsl.SubscriberName = sub.SubscriberName
+        WHERE tsl.SubscriberID = sub.SubscriberID;
+    END IF;    
     
     SELECT 	acc.AccountID
 		,	sub.SubscriberName
