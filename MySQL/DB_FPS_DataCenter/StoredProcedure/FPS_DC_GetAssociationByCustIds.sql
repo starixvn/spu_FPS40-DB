@@ -1,3 +1,10 @@
+USE `FPS_DataCenter`;
+DROP procedure IF EXISTS `FPS_DC_GetAssociationByCustIds`;
+
+DELIMITER $$
+USE `FPS_DataCenter`$$
+CREATE PROCEDURE `FPS_DC_GetAssociationByCustIds` (in custIds LONGTEXT, in roleId TINYINT)
+BEGIN
 /*
 	Created: 20190620@Harvey
 	Task : Get evidence for customer
@@ -9,16 +16,9 @@
     
     CALL FPS_DC_GetAssociationByCustIds (1,1)
 */
-
-USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetAssociationByCustIds`;
-
-DELIMITER $$
-USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetAssociationByCustIds` (in custIds LONGTEXT, in roleId TINYINT)
-BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
+    
 	SET @sql = CONCAT("INSERT INTO tmp_CustId (custId) VALUES ('", REPLACE(custIds, ",", "'),('"),"');");
 	PREPARE stmt1 from @sql;
 	EXECUTE stmt1;

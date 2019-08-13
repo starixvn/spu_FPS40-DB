@@ -1,3 +1,10 @@
+USE `FPS_DataCenter`;
+DROP PROCEDURE IF EXISTS `FPS_DC_GetAccountForUpdateCustInfo`;
+
+DELIMITER $$
+USE `FPS_DataCenter`$$
+CREATE PROCEDURE `FPS_DC_GetAccountForUpdateCustInfo` (in ip_Size int)
+BEGIN
 /*
 	Created: 20190620@Harvey
 	Task : Get Customer for updating IBC info
@@ -7,14 +14,6 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-
-USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetAccountForUpdateCustInfo`;
-
-DELIMITER $$
-USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetAccountForUpdateCustInfo` (in ip_Size int)
-BEGIN
 	   
     SELECT acc.AccountID
 			, acc.SubscriberID

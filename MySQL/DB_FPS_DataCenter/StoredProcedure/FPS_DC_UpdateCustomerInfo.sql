@@ -1,3 +1,10 @@
+USE FPS_DataCenter;
+DROP procedure IF EXISTS FPS_DC_UpdateCustomerInfo;
+
+DELIMITER $$
+USE FPS_DataCenter$$
+CREATE PROCEDURE FPS_DC_UpdateCustomerInfo (IN custDataXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
+BEGIN
 /*
 	Created: 20190620@Harvey
 	Task : Get IBC info
@@ -7,14 +14,6 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-
-USE FPS_DataCenter;
-DROP procedure IF EXISTS FPS_DC_UpdateCustomerInfo;
-
-DELIMITER $$
-USE FPS_DataCenter$$
-CREATE PROCEDURE FPS_DC_UpdateCustomerInfo (in custDataXml LONGTEXT, OUT op_ErrorCode TINYINT(1), OUT op_ErrorMessage VARCHAR(500))
-BEGIN
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount INT UNSIGNED;
 	DECLARE XpathRow VARCHAR(255);
@@ -25,16 +24,16 @@ BEGIN
 	CREATE TEMPORARY TABLE Temp_Account
     ( 
 		AccountID 		BIGINT (20) 
-	,	SubscriberID 		SMALLINT (6) 
+	,	SubscriberID 	SMALLINT (6) 
 	,	IsDeposit 		TINYINT (1) 
 	,	FirstLoginName	VARCHAR(50) 
 	,	CustID 			BIGINT (20) 
-	,	Username 			VARCHAR(50) 
+	,	Username 		VARCHAR(50) 
 	,	Username2 		VARCHAR(50) 
 	,	RoleID 			TINYINT (4) 
 	,	CurrencyID 		TINYINT (4) 
-	,	CurrencyName		VARCHAR(50) 
-	,	CreatedDate 		DATETIME 
+	,	CurrencyName	VARCHAR(50) 
+	,	CreatedDate 	DATETIME 
 	);
 
 	#=====================================================

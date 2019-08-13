@@ -1,3 +1,6 @@
+DELIMITER $$
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationXML LONGTEXT)
+BEGIN
 /*
 	Created:	20190610@Casey.Huynh
 	Task :		Get Association list by SyncGraphDB status;
@@ -7,10 +10,6 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-
-DELIMITER $$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationXML LONGTEXT)
-BEGIN
 
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount INT UNSIGNED;

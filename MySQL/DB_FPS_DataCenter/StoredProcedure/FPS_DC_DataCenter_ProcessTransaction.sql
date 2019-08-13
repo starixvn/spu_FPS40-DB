@@ -1,3 +1,11 @@
+DELIMITER $$
+
+USE FPS_DataCenter$$
+
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_ProcessTransaction$$
+
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT)
+BEGIN
 /*
 	Created: 20190610@Casey.Huynh
 	Task : Process data from raw to data center
@@ -8,14 +16,6 @@
 	Param's Explanation (filtered by):
 */
 
-DELIMITER $$
-
-USE FPS_DataCenter$$
-
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_ProcessTransaction$$
-
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_ProcessTransaction(IN ip_TransXml LONGTEXT)
-BEGIN
 	DECLARE RowIndex 			INT DEFAULT 0;
 	DECLARE RowCount 			INT;
 	DECLARE XpathRow 			VARCHAR(50);

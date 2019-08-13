@@ -1,3 +1,10 @@
+USE `FPS_DataCenter`;
+DROP PROCEDURE IF EXISTS `FPS_DC_GetTotalAssociationByCustIds`;
+
+DELIMITER $$
+USE `FPS_DataCenter`$$
+CREATE PROCEDURE `FPS_DC_GetTotalAssociationByCustIds` (IN custIds LONGTEXT, IN roleId TINYINT)
+BEGIN
 /*
 	Created: 20190620@Harvey
 	Task : Prepare SP for API
@@ -6,15 +13,10 @@
 
 	Revisions:
 	Param's Explanation (filtered by):
+    
+    
+	CALL `FPS_DataCenter`.`FPS_DC_GetTotalAssociationByCustomers`('1234');
 */
-
-USE `FPS_DataCenter`;
-DROP procedure IF EXISTS `FPS_DC_GetTotalAssociationByCustIds`;
-
-DELIMITER $$
-USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetTotalAssociationByCustIds` (in custIds LONGTEXT, in roleId TINYINT)
-BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT );
 	SET @sql = CONCAT("INSERT INTO tmp_CustId (custId) VALUES ('", REPLACE(custIds, ",", "'),('"),"');");
@@ -38,5 +40,3 @@ BEGIN
 END$$
 
 DELIMITER ;
-
--- CALL `FPS_DataCenter`.`FPS_DC_GetTotalAssociationByCustomers`('1234');
