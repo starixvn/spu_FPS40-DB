@@ -1,0 +1,94 @@
+/*
+	Created: 20190730@Casey.Huynh
+	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
+	DB: FPS_RawTransaction(rtaging)
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
+DELIMITER $$
+
+USE FPS_DataCenter$$
+
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_UnhandleSubscriberAction$$
+
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_UnhandleSubscriberAction(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
+BEGIN
+	
+	DECLARE	UnhandleStatus					TINYINT DEFAULT -1;
+    DECLARE	UnhandlesActionStatus			TINYINT DEFAULT -2;
+    
+    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
+    CREATE TEMPORARY TABLE Temp_UnhandleSubscriber 
+    (	
+		StagingTransID			BIGINT
+		, SubscriberName		VARCHAR(30)
+        , Status				INT1
+        , CreatedDate			DATETIME	#	Date Only
+    );
+
+    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleAction;
+    CREATE TEMPORARY TABLE Temp_UnhandleAction 
+    (	
+		StagingTransID			BIGINT
+		, ActionResultKey		VARCHAR(30)
+        , CreatedDate			DATETIME	#	Date Only
+    );
+
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+	INSERT INTO Temp_UnhandleSubscriber (StagingTransID, SubscriberName, Status, CreatedDate)
+    SELECT		rt.StagingTransID
+				, rt.SubscriberName
+                , su.Status
+                , rt.CreatedDate
+	FROM		FPS_RawTransaction.RawTransaction AS rt
+    LEFT JOIN	FPS_Admin.Subscriber AS su
+				ON rt.SubscriberName = su.SubscriberName
+	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
+				AND rt.IsProcessed = 0
+				AND (su.SubscriberName IS NULL
+					OR su.Status = UnhandleStatus);
+                    
+	INSERT INTO Temp_UnhandleAction (StagingTransID, ActionResultKey, CreatedDate)
+    SELECT		rt.StagingTransID
+				, rt.ActionResult
+                , rt.CreatedDate
+	FROM		FPS_RawTransaction.RawTransaction AS rt
+    LEFT JOIN	FPS_DataCenter.ActionResult AS ac
+				ON ac.ActionResultKey = rt.ActionResult
+	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
+				AND ac.ActionResultID IS NULL
+				AND rt.Isprocessed = 0; 
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    
+	SET SESSION autocommit = 0;
+	START  TRANSACTION;
+    #==UNHANDLE SUBSCRIBER================================================================
+	INSERT INTO FPS_Admin.Subscriber (SubscriberName, CreatedDate, Status)
+	SELECT 		ts.SubscriberName
+				, MIN(ts.CreatedDate) AS CreatedDate
+				, UnhandleStatus	AS Status # UnhandleStatus
+    FROM		Temp_UnhandleSubscriber AS ts   
+    WHERE		ts.Status IS NULL
+    GROUP BY	ts.SubscriberName;
+    
+    UPDATE FPS_RawTransaction.RawTransaction AS rt
+    INNER JOIN	Temp_UnhandleSubscriber AS tt 
+				ON rt.StagingTransID = tt.StagingTransID                
+	SET			rt.IsProcessed = UnhandleStatus; 
+
+    #==UNHANDLE ACTION================================================================
+  
+	INSERT INTO FPS_DataCenter.ActionResult (ActionResultKey, CreatedDate, ActionStatus)
+	SELECT 		ts.ActionResultKey
+				, MIN(ts.CreatedDate)	AS CreatedDate
+				, UnhandleStatus		AS ActionStatus # UnhandleStatus
+    FROM		Temp_UnhandleAction AS ts
+    GROUP BY	ts.ActionResultKey;
+    COMMIT;
+    SET SESSION autocommit = 0;
+END$$
+DELIMITER ;
