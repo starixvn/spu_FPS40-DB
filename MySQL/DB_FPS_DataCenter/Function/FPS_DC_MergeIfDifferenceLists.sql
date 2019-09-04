@@ -9,30 +9,30 @@
 */
 DELIMITER $$
 USE `FPS_DataCenter`$$
-
-CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000)) RETURNS VARCHAR(5000) CHARSET UTF8
+DROP FUNCTION IF EXISTS FPS_DC_MergeIfDifferenceLists$$
+CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 VARCHAR(5000), ip_List02 VARCHAR(5000)) RETURNS VARCHAR(5000)
     DETERMINISTIC
 BEGIN
 	DECLARE i 		INT;
-	DECLARE str 	NVARCHAR(5000);
-	DECLARE result 	NVARCHAR(5000) DEFAULT NULL;
+	DECLARE str 	VARCHAR(5000);
+	DECLARE result 	VARCHAR(5000) DEFAULT NULL;
 	DECLARE	CountTable01 INT;
     DECLARE CountTableMerge INT;
       
     DROP temporary TABLE if exists temp_Table01;
 	CREATE TEMPORARY TABLE temp_Table01(
-		item NVARCHAR(5000)
+		item VARCHAR(5000)
 	);
     
 	#----------------------------------------
 	DROP temporary TABLE if exists temp_Table02;
 	CREATE TEMPORARY TABLE temp_Table02(
-		item NVARCHAR(5000)
+		item VARCHAR(5000)
 	);
     
     DROP temporary TABLE if exists temp_TableMerge;
     CREATE TEMPORARY TABLE temp_TableMerge(
-		item NVARCHAR(5000)
+		item VARCHAR(5000)
 	);
  #------------------------------------------
 	SET i = 0;

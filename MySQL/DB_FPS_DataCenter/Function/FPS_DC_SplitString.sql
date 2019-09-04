@@ -10,6 +10,8 @@
 DELIMITER $$
 USE `FPS_DataCenter`$$
 
+DROP FUNCTION IF EXISTS `FPS_DC_SplitString`$$
+
 CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_SplitString`(
 	ip_String 		VARCHAR(255) ,
 	ip_seperator	VARCHAR(12) ,

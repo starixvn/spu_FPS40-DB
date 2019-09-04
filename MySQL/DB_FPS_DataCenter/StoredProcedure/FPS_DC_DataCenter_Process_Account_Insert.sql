@@ -13,7 +13,6 @@ DELIMITER $$
 USE FPS_DataCenter$$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert$$
-
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert(IN ip_AccountXml LONGTEXT)
 BEGIN
 	DECLARE RowIndex 			INT DEFAULT 0;
@@ -25,11 +24,18 @@ BEGIN
     DECLARE DeviceStatusRecover		TINYINT DEFAULT 3;			# Recover Device	
     
     ####
+	### PERFORMANCE: START
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_Account_Insert' ;
+    DECLARE		GroupID 	INT;
+    DECLARE 	Notes	 	varchar(500);
+	DECLARE 	StartTime	TIMESTAMP(4);
+	DECLARE		EndTime 	TIMESTAMP(4);
+	DECLARE		Duration 	BIGINT ;
     
-    DECLARE StartTime			DATETIME;
-    DECLARE ENDTime				DATETIME;
-   
-    SET StartTime	= CURRENT_TIMESTAMP();
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = Current_TimeStamp(4);
+    ### PERFORMANCE: END
+
     #=========================================================================================
     DROP TEMPORARY TABLE IF EXISTS Temp_Account;
 	
@@ -83,7 +89,8 @@ BEGIN
 		, Username2		
 		, RoleID
 		, CurrencyID
-		, CurrencyName		
+		, CurrencyName
+        , UNUN2
 		)
 	SELECT    
 		tac.SubscriberID
@@ -92,18 +99,26 @@ BEGIN
         , tac.CreatedDate
         , tac.CustID
 		, tac.Username #(CASE WHEN CustID IS NULL THEN LoginName ELSE tac.Username END) AS Username
-		, tac.Username2		
+		, (CASE WHEN tac.CustID IS NULL THEN LoginName ELSE tac.LoginNameWithPrefix END) AS Username2 #tac.Username2		
 		, tac.RoleID
 		, tac.CurrencyID
 		, tac.CurrencyName
+        , (CASE WHEN tac.IsDeposit = 1	THEN CONCAT(';',tac.LoginNameWithPrefix,';')
+										ELSE CONCAT(';', tac.UserName,';', tac.UserName2,';')
+										END)
 	FROM		Temp_Account AS tac
-	LEFT JOIN	FPS_DataCenter.Account AS acc
+	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_Account_SubscriberID_FirstLoginName_UserName_Username2)
 				ON	tac.SubscriberID = acc.SubscriberID
-					AND	( 	tac.LoginName = acc.FirstLoginName
-							OR tac.LoginName = acc.UserName
-                            OR tac.LoginNameWithPrefix = acc.Username2
-						)
-	WHERE	acc.AccountID IS NULL;
-
+					AND acc.UNUN2 LIKE CONCAT('%;', REPLACE(tac.LoginNameWithPrefix,'_','\_'),';%')
+	WHERE	acc.AccountID IS NULL;	
+    	
+	### PERFORMANCE
+    SET EndTime = Current_TimeStamp(4);
+	
+    SET Notes = CONCAT('NoOfAccount',(SELECT COUNT(1) FROM Temp_Account));
+    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+	### PERFORMANCE 
+    
 END$$
 DELIMITER ;

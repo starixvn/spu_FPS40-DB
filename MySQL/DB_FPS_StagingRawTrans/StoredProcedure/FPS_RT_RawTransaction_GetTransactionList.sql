@@ -12,7 +12,7 @@ DELIMITER $$
 
 USE FPS_RawTransaction$$
 
-CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT(1), IN ip_NoOfTickets INT)
+CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTransaction_GetTransactionList(IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT)
 BEGIN
   
     # RETURN Transaction List
@@ -22,8 +22,8 @@ BEGIN
 			, st.TransDate
 			, st.CreatedDate
             , st.DeviceCode
-			, st.FingeringCode
-			, st.FingeringMoreInfo
+			, st.FingerprintCode
+			, st.FingerprintMoreInfo
 			, st.UserAgent
 			, st.IP
 			, st.PluginID			

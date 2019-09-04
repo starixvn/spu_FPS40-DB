@@ -16,15 +16,15 @@ CREATE TABLE FPS_RawTransaction.RawTransaction(
 	, TransDate					DATETIME	 					NOT NULL
 	, CreatedDate				DATETIME						NOT NULL	COMMENT 'Date Only'
 	, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
-	, FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'
-	, FingeringMoreInfo			TEXT		 					NULL
+	, FingerprintCode			VARCHAR(640)					NULL		COMMENT 'Device Fingerprint Codes, the hashcode bases on the set attributes'
+	, FingerprintMoreInfo		TEXT		 					NULL
 	, UserAgent					TEXT 							NULL
 	, IP						VARCHAR(50) 					NULL
 	, PluginID					BIGINT 							NULL
 	, URL						VARCHAR(250) 					NULL
 	, ActionResult				VARCHAR(100) 					NULL
     
-    , IsProcessed		TINYINT(1)						NOT NULL	DEFAULT '0'
+    , IsProcessed		TINYINT							NOT NULL	DEFAULT '0'
     , StagingTransID	BIGINT		AUTO_INCREMENT		NOT NULL	
 
 	, PRIMARY KEY PK_RawTransaction_StaingTransID(StagingTransID)

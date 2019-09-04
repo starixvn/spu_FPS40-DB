@@ -19,7 +19,23 @@ BEGIN
 	
 	DECLARE	UnhandleStatus					TINYINT DEFAULT -1;
     DECLARE	UnhandlesActionStatus			TINYINT DEFAULT -2;
+    	### PERFORMANCE: START
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_UnhandleSubscriberAction' ;
+    DECLARE		GroupID 	INT;
+    DECLARE 	Notes	 	varchar(500);
+	DECLARE 	StartTime	TIMESTAMP(4);
+	DECLARE		EndTime 	TIMESTAMP(4);
+	DECLARE		Duration 	BIGINT ;
     
+    
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = Current_TimeStamp(4);
+    
+	#INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
+    #Values(SPName, GroupID, 0, 'Start',StartTime);
+    
+    ### PERFORMANCE: END
+	
     DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
     CREATE TEMPORARY TABLE Temp_UnhandleSubscriber 
     (	
@@ -89,6 +105,15 @@ BEGIN
     FROM		Temp_UnhandleAction AS ts
     GROUP BY	ts.ActionResultKey;
     COMMIT;
-    SET SESSION autocommit = 0;
+    
+    SET SESSION autocommit = 1;
+    
+    	### PERFORMANCE
+    SET EndTime = Current_TimeStamp(4);
+   
+    SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
+    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+	### PERFORMANCE 
 END$$
 DELIMITER ;

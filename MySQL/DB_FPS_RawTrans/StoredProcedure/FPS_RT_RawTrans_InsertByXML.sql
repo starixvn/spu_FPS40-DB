@@ -9,7 +9,6 @@
 */
 
 DELIMITER $$
-USE FPS_RawTrans$$
 
 CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTrans_InsertByXML(IN ip_RawTransXml LONGTEXT)
 BEGIN
@@ -21,12 +20,12 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS Temp_RawTransaction;
     
 	CREATE TEMPORARY TABLE Temp_RawTransaction (
-		LoginName					VARCHAR(50) CHARACTER SET utf8	NOT NULL	COMMENT 'NVARCHAR'
+		LoginName					VARCHAR(50) CHARACTER SET UTF8MB4 NOT NULL	COMMENT 'NVARCHAR'
 		, SubscriberName			VARCHAR(50) 					NOT NULL
 		, TransDate					DATETIME 						NOT NULL
 		, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
-		, FingeringCode				VARCHAR(5000)					NULL		COMMENT 'Device Fingering Codes, the hashcode bases on the set attributes'
-		, FingeringMoreInfo			TEXT		 				NULL
+		, FingerprintCode			VARCHAR(5000)					NULL		COMMENT 'Device Fingerprint Codes, the hashcode bases on the set attributes'
+		, FingerprintMoreInfo		TEXT		 					NULL
 		, UserAgent					VARCHAR(500) 					NULL
 		, IP						VARCHAR(50) 					NULL
 		, PluginID					BIGINT 							NULL
@@ -48,8 +47,8 @@ BEGIN
 			, SubscriberName
             , TransDate
             , DeviceCode
-            , FingeringCode
-            , FingeringMoreInfo
+            , FingerprintCode
+            , FingerprintMoreInfo
             , UserAgent
             , IP
             , PluginID
@@ -62,8 +61,8 @@ BEGIN
          , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::SubscriberName'))
          , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::TransDate'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::DeviceCode'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingeringCode'))
-		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingeringMoreInfo'))
+		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingerprintCode'))
+		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::FingerprintMoreInfo'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::UserAgent'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::IP'))
 		 , EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::PluginID'))
@@ -79,8 +78,8 @@ BEGIN
 		, TransDate
 		, CreatedDate
 		, DeviceCode
-		, FingeringCode
-		, FingeringMoreInfo
+		, FingerprintCode
+		, FingerprintMoreInfo
 		, UserAgent
 		, IP
 		, PluginID
@@ -93,8 +92,8 @@ BEGIN
 		, rt.TransDate
 		, DATE(rt.TransDate) AS CreatedDate
 		, rt.DeviceCode
-		, rt.FingeringCode
-		, rt.FingeringMoreInfo
+		, rt.FingerprintCode
+		, rt.FingerprintMoreInfo
 		, rt.UserAgent
 		, rt.IP
 		, rt.PluginID

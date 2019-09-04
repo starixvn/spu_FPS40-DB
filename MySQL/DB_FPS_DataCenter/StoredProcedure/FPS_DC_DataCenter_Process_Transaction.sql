@@ -13,24 +13,37 @@ DELIMITER $$
 USE FPS_DataCenter$$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Transaction$$
-
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Transaction(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
 BEGIN
+	### PERFORMANCE: START
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_Transaction' ;
+    DECLARE		GroupID 	INT;
+    DECLARE 	Notes	 	varchar(500);
+	DECLARE 	StartTime	TIMESTAMP(4);
+	DECLARE		EndTime 	TIMESTAMP(4);
+	DECLARE		Duration 	int ;
+    
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = Current_TimeStamp(4);
+    ### PERFORMANCE: END
 	SET SESSION autocommit = 0;
 	START  TRANSACTION;
-	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultID,  UserAgentID, AccountID, DeviceID, LoginName 
-				,  TransDate, CreatedDate, PluginID, Flagged)                
+	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultID, UserAgentID, AccountID, DeviceID, DeviceCode, FingerprintCode, FingerprintMoreInfo, LoginName 
+				,  TransDate, CreatedDate, IP, PluginID, Flagged)                
 	SELECT 		rt.StagingTransID
 				, su.SubscriberID
 				, ur.SubscriberURLID
                 , ar.ActionResultID
 				, ua.UserAgentID
                 , ac.AccountID
-				, 2 #as dv.DeviceID
+				, dc.DeviceID
+                , rt.DeviceCode
+                , rt.FingerprintCode
+                , rt.FingerprintMoreInfo
 				, rt.LoginName				            
 				, rt.TransDate
 				, rt.CreatedDate
-				#, rt.IP
+				, rt.IP
 				, rt.PluginID
 				, 0 AS Flagged				
 	FROM		FPS_RawTransaction.RawTransaction AS rt
@@ -43,21 +56,28 @@ BEGIN
 				ON rt.ActionResult = ar.ActionResultKey
 	INNER JOIN	FPS_DataCenter.UserAgent AS ua
 				ON MD5(rt.UserAgent) = ua.UserAgentCode
-	INNER JOIN	FPS_DataCenter.Account AS ac
+	LEFT JOIN	FPS_DataCenter.DeviceCode AS dc
+				ON rt.DeviceCode = dc.DeviceCode
+	INNER JOIN	FPS_DataCenter.Account AS ac USE INDEX (IX_Account_SubscriberID_FirstLoginName_UserName_Username2) 
 				ON	su.SubscriberID = ac.SubscriberID
-				AND	( 	rt.LoginName = ac.FirstLoginName
-						OR rt.LoginName = ac.UserName
-						OR CONCAT(su.SubScriberPrefix, rt.LoginName) = ac.Username2)
+				AND	ac.UNUN2 LIKE CONCAT('%;',su.SubScriberPrefix,REPLACE(rt.LoginName,'_','\_'),';%')
 	WHERE		rt.IsProcessed = 0
 				AND rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID;
-	
-	#--===================================================	
+                
+	#===============================================================================================================	
     UPDATE 	FPS_RawTransaction.RawTransaction AS rt
 	SET		rt.IsProcessed = 1
     WHERE	rt.IsProcessed = 0
 			AND rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID;	
 	COMMIT;
 	SET SESSION autocommit = 1;
+    	### PERFORMANCE
+    SET EndTime = Current_TimeStamp(4);
+   
+    SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
+    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+	### PERFORMANCE 
             
 END$$
 DELIMITER ;

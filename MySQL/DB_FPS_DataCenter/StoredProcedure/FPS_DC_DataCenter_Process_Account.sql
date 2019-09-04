@@ -13,9 +13,20 @@ DELIMITER $$
 USE FPS_RawTransaction$$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Account$$
-
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
 BEGIN
+	### PERFORMANCE: START
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_Account' ;
+    DECLARE		GroupID 	INT;
+    DECLARE 	Notes	 	varchar(500) DEFAULT 'Start Get MinMax';
+	DECLARE 	StartTime	TIMESTAMP(4);
+	DECLARE		EndTime 	TIMESTAMP(4);
+	DECLARE		Duration 	int ;
+    
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = Current_TimeStamp(4);
+    
+    ### PERFORMANCE: END
     
     DROP TEMPORARY TABLE IF EXISTS Temp_Account;
     CREATE TEMPORARY TABLE Temp_Account 
@@ -26,10 +37,10 @@ BEGIN
         , IsDeposit			TINYINT
         , URL				VARCHAR(250)
         , ActionResult		VARCHAR(100)
-        , LoginName			VARCHAR(50)
+        , LoginName			VARCHAR(50)	
         , CreatedDate		DATETIME        
     );
-
+    
     INSERT INTO Temp_Account (SubscriberID, SubscriberName, SubscriberPrefix, IsDeposit, URL, LoginName, CreatedDate)
     SELECT 		su.SubscriberID
 				, su.SubscriberName
@@ -46,7 +57,7 @@ BEGIN
     GROUP BY	su.SubscriberID
 				, rt.URL
 				, rt.LoginName;  
-    
+  
 	#========INSERT: URL if not Existing============================================================================ 
     INSERT INTO FPS_DataCenter.SubscriberURL (SubscriberID, URL, CreatedDate)
     SELECT 		ta.SubscriberID
@@ -58,7 +69,7 @@ BEGIN
                 AND	ur.URL = ta.URL
 	WHERE		ur.URL IS NULL
     GROUP BY	ta.SubscriberID, ta.URL;
-    
+        
 	SELECT 		ta.LoginName,
 				CONCAT(ta.SubscriberPrefix, ta.LoginName) AS LoginNameWithPrefix,
 				ta.SubscriberName,
@@ -66,11 +77,18 @@ BEGIN
 				ta.IsDeposit,
 				MIN(ta.CreatedDate) AS CreatedDate
 	FROM		Temp_Account AS ta
-	LEFT JOIN	FPS_DataCenter.Account AS ac ON ta.SubscriberID = ac.SubscriberID
-				AND (ta.LoginName = ac.FirstLoginName
-				OR ta.LoginName = ac.UserName
-				OR CONCAT(ta.SubScriberPrefix, ta.LoginName) = ac.Username2)
+	LEFT JOIN	FPS_DataCenter.Account AS ac USE INDEX (IX_Account_SubscriberID_FirstLoginName_UserName_Username2)
+				ON ta.SubscriberID = ac.SubscriberID
+                AND ac.UNUN2 LIKE CONCAT('%;',ta.SubScriberPrefix,REPLACE(ta.LoginName,'_','\_'),';%')
 	WHERE		ac.AccountID IS NULL
-	GROUP BY	ta.LoginName , ta.SubscriberPrefix , ta.SubscriberName , ta.SubscriberID , ta.IsDeposit;	 
+	GROUP BY	ta.LoginName , ta.SubscriberPrefix , ta.SubscriberName , ta.SubscriberID , ta.IsDeposit;	
+    
+    ### PERFORMANCE
+    SET EndTime = Current_TimeStamp(4);
+   
+    SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
+    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+	### PERFORMANCE 
 END$$
 DELIMITER ;

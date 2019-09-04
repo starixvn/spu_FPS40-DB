@@ -11,28 +11,28 @@
 DELIMITER $$
 
 USE `FPS_DataCenter`$$
+DROP FUNCTION IF EXISTS FPS_DC_IsListsMatchByItem$$
+CREATE FUNCTION FPS_DC_IsListsMatchByItem (ip_seperator VARCHAR(5), ip_List01 VARCHAR(5000), ip_List02 VARCHAR(5000))
 
-CREATE FUNCTION FPS_DC_IsListsMatchByItem (ip_seperator VARCHAR(5), ip_List01 NVARCHAR(5000), ip_List02 NVARCHAR(5000))
-
-RETURNS TINYINT(1)
+RETURNS TINYINT
 
 DETERMINISTIC
 
 BEGIN
 	DECLARE i 		INT;
-	DECLARE str 	NVARCHAR(5000);
-	DECLARE result 	TINYINT(1) DEFAULT 0;
+	DECLARE str 	VARCHAR(5000);
+	DECLARE result 	TINYINT DEFAULT 0;
 
 	IF(ip_List01 = '' OR ISNULL(ip_List01)= 1 OR ip_List02 = '' OR ISNULL(ip_List02)= 1 ) THEN
 		
 		Return result;
 		
 	END IF;
-		DROP TEMPORARY TABLE IF EXISTS temp_Table01;
+	DROP TEMPORARY TABLE IF EXISTS temp_Table01;
 	DROP TEMPORARY TABLE IF EXISTS temp_Table02;
 	
 	CREATE TEMPORARY TABLE temp_Table01(
-		item NVARCHAR(5000)
+		item VARCHAR(5000)
 	);
 	#----------------------------------------
 
