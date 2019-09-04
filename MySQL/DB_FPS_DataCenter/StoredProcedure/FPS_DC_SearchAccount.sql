@@ -20,6 +20,8 @@ BEGIN
     
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 	
+    SET ip_Username = REPLACE(ip_Username, '_', '\_');
+    
     IF ip_SubscriberIDs = '-1' THEN
 		INSERT INTO tmp_SubscriberList (SubscriberID, SubscriberName)
         SELECT sub.SubscriberID, sub.SubscriberName
@@ -32,6 +34,11 @@ BEGIN
 		PREPARE stmt1 from @sql;
 		EXECUTE stmt1;    
         
+        DELETE FROM tmp_SubscriberList
+		WHERE SubscriberID NOT IN ( SELECT us.SubscriberID
+									FROM FPS_Admin.UserSubscriber AS us
+                                    WHERE us.UserID = ip_userId);
+        
         UPDATE tmp_SubscriberList AS tsl,
 			FPS_Admin.Subscriber AS sub
 		SET tsl.SubscriberName = sub.SubscriberName
@@ -39,13 +46,14 @@ BEGIN
     END IF;    
     
     SELECT 	acc.AccountID
-		,	sub.SubscriberName
+		,	acc.CustID
+		,	tsl.SubscriberName
         ,	acc.Username
         ,	acc.Username2
     FROM 	FPS_DataCenter.Account AS acc
 		INNER JOIN tmp_SubscriberList AS tsl ON acc.SubscriberID = tsl.SubscriberID
-		INNER JOIN FPS_Admin.Subscriber AS sub ON acc.SubscriberID = sub.SubscriberID
-    WHERE	(acc.Username LIKE CONCAT('%', ip_Username, '%') OR acc.Username2 LIKE CONCAT('%', ip_Username, '%'));	  
+    WHERE	(acc.Username LIKE CONCAT('%', ip_Username, '%') OR acc.Username2 LIKE CONCAT('%', ip_Username, '%'))
+    ORDER BY acc.Username;	  
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
 END$$

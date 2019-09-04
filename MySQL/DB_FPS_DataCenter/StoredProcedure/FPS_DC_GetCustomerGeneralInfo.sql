@@ -34,18 +34,39 @@ BEGIN
 	,	CreatedDate 	DATETIME 
 	);
     
-    SELECT 	`AccountID` 		= acc.AccountID 
-		,	`CustID` 			= acc.CustID
-        ,	`FirstLoginName`	= acc.FirstLoginName
-        ,	`Username` 			= acc.Username
-        ,	`Username2` 		= acc.Username2
-        ,	`CurrencyID` 		= acc.CurrencyID
-        ,	`CurrencyName` 		= acc.CurrencyName
-        ,	`SubscriberID` 		= acc.SubscriberID
-        ,	`RoleID` 			= acc.RoleID
-        ,	`IsDeposit` 		= acc.IsDeposit
-        ,	`CreatedDate` 		= acc.CreatedDate
-    FROM FPS_DataCenter.Account AS acc
+    SET @LastLogin = CURRENT_TIMESTAMP();
+    SET @LoginCount = 0;
+    SET @AccountStatus = 0;
+    
+    SELECT @AccountStatus = 1
+    FROM FPS_DataCenter.TargetEvidence AS te
+    WHERE te.TargetID = ip_accountId;
+    
+    SELECT @AccountStatus = 2
+    FROM FPS_DataCenter.TargetEvidence AS te
+    WHERE te.CentralPointID = ip_accountId;
+    
+    SELECT 	@LastLogin = MAX(t.CreatedDate)
+		,	@LoginCount = COUNT(1)
+    FROM FPS_DataCenter.Transaction AS t
+    WHERE t.AccountID = ip_accountId;
+    
+    SELECT 	acc.AccountID AS `AccountID`
+		,	acc.CustID AS `CustID`
+        ,	@AccountStatus AS `AccountStatus`	
+        ,	acc.FirstLoginName AS `FirstLoginName`
+        ,	acc.Username AS `Username`
+        ,	acc.Username2 AS `Username2`
+        ,	acc.CurrencyID AS `CurrencyID` 
+        ,	acc.CurrencyName AS `CurrencyName` 		
+        ,	acc.SubscriberID AS `SubscriberID` 
+        ,	acc.RoleID AS `RoleID` 	
+        ,	acc.IsDeposit AS `IsDeposit` 
+        ,	acc.CreatedDate AS `CreatedDate` 		
+        ,	@LastLogin AS `LastLoginDate`		
+        ,	@LoginCount AS `LoginCount`
+        ,	DATEDIFF(acc.CreatedDate, @LastLogin) AS `AccountAge`	
+    FROM FPS_DataCenter.Account AS acc    
     WHERE acc.AccountID = ip_accountId;
 	
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;

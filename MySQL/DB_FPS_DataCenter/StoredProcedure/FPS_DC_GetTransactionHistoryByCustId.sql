@@ -25,26 +25,23 @@ BEGIN
 		SET @rptStartDate = DATE_ADD(@rptEndDate, INTERVAL -(ip_historyRange) DAY);
     END IF;
     
-    SELECT 	`TransDate` 		= t.TransDate
-		,	`DeviceCode` 		= t.DeviceCode
-        ,	`DeviceStatus` 		= d.DeviceStatus 
-        ,	`RobotTracking`		= t.Flagged
-        ,	`Action` 			= ar.ActionResultKey
-        ,	`ActionResult` 		= ar.ActionResultKey
-        ,	`DeviceType` 		= t.OS 
-        ,	`Browser` 			= t.Browser
-        ,	`Domain` 			= url.URL
-        ,	`IP` 				= t.IP
-        ,	`Country` 			= ipr.CountryName
-        ,	`Region` 			= ipr.Region
-        ,	`City` 				= ipr.City
-        ,	`ServiceProvider` 	= ipr.ISPName
+    SELECT 	t.TransDate AS `TransDate`
+		,	t.DeviceCode AS `DeviceCode`
+        ,	d.DeviceStatus AS `DeviceStatus`
+        ,	t.Flagged AS `RobotTracking`
+        ,	ar.ActionResultKey AS `ActionResult` 
+        ,	ua.OS AS `DeviceType` 	
+        ,	ua.Browser AS `Browser`
+        ,	url.URL AS `Domain`
+        ,	t.IP AS `IP`
+        ,	t.IPRangeLocationID AS `IPRangeLocationID`
 	FROM FPS_DataCenter.Transaction AS t
 		INNER JOIN FPS_DataCenter.ActionResult AS ar ON t.ActionResultID = ar.ActionResultID
-        INNER JOIN FPS_DataCenter.IPRangeLocation AS ipr ON t.IPRangeLocationID = ipr.IPRangeLocationID
         INNER JOIN FPS_DataCenter.SubscriberURL AS url ON t.SubURLID = url.SubscriberURLID
         INNER JOIN FPS_DataCenter.Device AS d ON t.DeviceID = d.DeviceID
-	WHERE t.TransDate > @rptStartDate AND t.TransDate < @rptEndDate;
+        INNER JOIN FPS_DataCenter.UserAgent AS ua ON ua.UserAgentID = t.UserAgentID
+	WHERE t.AccountID = ip_accountId
+		AND t.TransDate > @rptStartDate AND t.TransDate < @rptEndDate;
 
 	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
