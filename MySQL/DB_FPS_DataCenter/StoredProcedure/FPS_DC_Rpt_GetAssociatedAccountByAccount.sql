@@ -15,9 +15,7 @@ BEGIN
 	Param's Explanation (filtered by):
     
     CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('4139416,3945234,7777983', 397);
-    
-    CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('13220642,26723641,16091304,10586921', 7180);
-	CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('13220642,26723641,16091304,10586921', 1995);
+
 */
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT, accountId INT );

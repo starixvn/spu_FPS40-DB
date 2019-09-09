@@ -7,7 +7,7 @@ CREATE PROCEDURE `FPS_DC_Rpt_ChainToEvidence` (IN targetId BIGINT, IN targetType
 BEGIN
 /*
 	Created: 20190909@Harvey
-	Task : Get evidence by account
+	Task : Get chain to evidence
 	DB: FPS_DataCenter
 	Original:
 
