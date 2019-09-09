@@ -13,7 +13,11 @@ BEGIN
 
 	Revisions:
 	Param's Explanation (filtered by):
+    
     CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('4139416,3945234,7777983', 397);
+    
+    CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('13220642,26723641,16091304,10586921', 7180);
+	CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('13220642,26723641,16091304,10586921', 1995);
 */
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
 	CREATE TEMPORARY TABLE tmp_CustId( custId INT, accountId INT );
@@ -39,7 +43,7 @@ BEGIN
 	INNER JOIN FPS_DataCenter.Account acc ON trans.AccountID = acc.AccountID
 	INNER JOIN FPS_DataCenter.Transaction trans2 ON trans.DeviceID = trans2.DeviceID
 		AND trans2.AccountID = rootAccountId
-	LEFT JOIN FPS_DataCenter.TargetEvidence tarEvi ON acc.AccountID = tarEvi.TargetID AND tarEvi.TargetType = 0 AND tarEvi.CentralPointID = rootAccountId
+	LEFT JOIN FPS_DataCenter.TargetEvidence tarEvi ON acc.AccountID = tarEvi.TargetID AND tarEvi.TargetType = 0
 	WHERE trans.AccountID IN (SELECT AccountID FROM tmp_CustId)
 	GROUP BY trans.AccountID
 		,acc.CreatedDate;
