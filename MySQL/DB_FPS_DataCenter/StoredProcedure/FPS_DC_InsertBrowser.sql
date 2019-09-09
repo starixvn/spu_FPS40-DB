@@ -16,15 +16,16 @@ BEGIN
     
     DECLARE LastID INT UNSIGNED;
     
-    SET LastID = (SELECT BrowserID FROM FPS_DataCenter.Browser AS br WHERE br.BrowserName = ip_Browser);       
-    
-    IF LastID is NULL THEN
-		INSERT IGNORE INTO FPS_DataCenter.Browser(BrowserName, CreatedDate) VALUES(ip_Browser, NOW());
-        SET op_BrowserID = (SELECT MAX(BrowserID) FROM FPS_DataCenter.Browser);  
-    ELSE
-		SET op_BrowserID = LastID;
-    END IF;
-   
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+		SET LastID = (SELECT BrowserID FROM FPS_DataCenter.Browser AS br WHERE br.BrowserName = ip_Browser);       
+		
+		IF LastID is NULL THEN
+			INSERT IGNORE INTO FPS_DataCenter.Browser(BrowserName, CreatedDate) VALUES(ip_Browser, NOW());
+			SET op_BrowserID = (SELECT MAX(BrowserID) FROM FPS_DataCenter.Browser);  
+		ELSE
+			SET op_BrowserID = LastID;
+		END IF;
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 
 DELIMITER ;

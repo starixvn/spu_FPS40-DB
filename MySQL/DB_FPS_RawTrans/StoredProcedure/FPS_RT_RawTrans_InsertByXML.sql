@@ -22,7 +22,7 @@ BEGIN
 	CREATE TEMPORARY TABLE Temp_RawTransaction (
 		LoginName					VARCHAR(50) CHARACTER SET UTF8MB4 NOT NULL	COMMENT 'NVARCHAR'
 		, SubscriberName			VARCHAR(50) 					NOT NULL
-		, TransDate					DATETIME 						NOT NULL
+		, TransDate					TIMESTAMP(4)					NOT NULL
 		, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
 		, FingerprintCode			VARCHAR(5000)					NULL		COMMENT 'Device Fingerprint Codes, the hashcode bases on the set attributes'
 		, FingerprintMoreInfo		TEXT		 					NULL

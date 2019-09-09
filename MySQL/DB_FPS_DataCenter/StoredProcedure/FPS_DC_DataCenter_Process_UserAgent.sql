@@ -18,6 +18,7 @@ CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_UserAgent(IN ip_FromSt
 BEGIN
 	
 	DECLARE	UnhandleStatus		TINYINT DEFAULT 2;
+    
 	### PERFORMANCE: START
 	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_UserAgent' ;
     DECLARE		GroupID 	INT;
@@ -37,7 +38,9 @@ BEGIN
 		UserAgent			TEXT
         , UserAgentCode		VARCHAR(32)
     );    
-	    
+	
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; 
+    
     INSERT INTO Temp_UserAgent (UserAgent, UserAgentCode)
     SELECT		rt.UserAgent
 				, MD5(rt.UserAgent)
@@ -46,16 +49,18 @@ BEGIN
 				ON ua.UserAgentCode = MD5(rt.UserAgent)
     WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
 				AND rt.IsProcessed = 0
-                AND ua.UserAgentID IS NULL
+                AND ua.UserAgentCode IS NULL
     GROUP BY	rt.UserAgent;
+    #ON DUPLICATE KEY UPDATE UserAgentCode = MD5(rt.UserAgent);
     
 	#========INSERT: Subscriber which are unhandled interagtion=====================================================
-
 	INSERT INTO FPS_DataCenter.UserAgent (UserAgent, UserAgentCode)
 	SELECT 		tu.UserAgent
 				, tu.UserAgentCode
-    FROM		Temp_UserAgent AS tu;	
+    FROM		Temp_UserAgent AS tu;   
 
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    
 	### PERFORMANCE
     SET EndTime = Current_TimeStamp(4);
    

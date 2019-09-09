@@ -14,18 +14,18 @@ BEGIN
 	Revisions:
 	Param's Explanation (filtered by):
 */
-	   
-    SELECT acc.AccountID
-			, acc.SubscriberID
-            , (CASE	WHEN acc.IsDeposit = 1 THEN CONCAT(sub.SubscriberPrefix, acc.FirstLoginName) 
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+    SELECT		acc.AccountID
+				, acc.SubscriberID
+				, (CASE	WHEN acc.IsDeposit = 1 THEN CONCAT(sub.SubscriberPrefix, acc.FirstLoginName) 
 					ELSE acc.FirstLoginName END) AS LoginName
 	FROM		FPS_DataCenter.Account acc
 	INNER JOIN	FPS_Admin.Subscriber sub
 				ON acc.SubscriberID = sub.SubscriberID
-	WHERE 	acc.IsDeposit IS NOT NULL
-			AND acc.CustID IS NULL
+	WHERE 		acc.IsDeposit IS NOT NULL
+				AND acc.CustID IS NULL
     LIMIT ip_Size;
-  
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 
 DELIMITER ;

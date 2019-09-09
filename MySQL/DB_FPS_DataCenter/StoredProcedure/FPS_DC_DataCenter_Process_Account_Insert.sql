@@ -13,27 +13,24 @@ DELIMITER $$
 USE FPS_DataCenter$$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert$$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert(IN ip_AccountXml LONGTEXT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert(IN ip_AccountJson JSON)
 BEGIN
-	DECLARE RowIndex 			INT DEFAULT 0;
-	DECLARE RowCount 			INT;
-	DECLARE XpathRow 			VARCHAR(50);
-    DECLARE	UnhandleStatus		TINYINT DEFAULT 2;
+	DECLARE	UnhandleStatus			TINYINT DEFAULT 2;
     DECLARE DeviceStatusNew			TINYINT DEFAULT 1;			# New Device
     DECLARE DeviceStatusExisting	TINYINT DEFAULT 2;			# Existing Device has not been recover
     DECLARE DeviceStatusRecover		TINYINT DEFAULT 3;			# Recover Device	
     
     ####
 	### PERFORMANCE: START
-	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_Account_Insert' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_Account_Insert' ;
     DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	varchar(500);
+    DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	BIGINT ;
     
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = Current_TimeStamp(4);
+    SET 	StartTime = CURRENT_TIMESTAMP(4);
     ### PERFORMANCE: END
 
     #=========================================================================================
@@ -53,31 +50,39 @@ BEGIN
 		, CurrencyID		SMALLINT
 		, CurrencyName		VARCHAR(50)        
 	);   
-  
-    #========1.GET DATA FROM XML TO TEMP TABLE=================================================================================
-    SET RowCount = EXTRACTVALUE(ip_AccountXml,'count(//root/account)');      
       
-    WHILE RowIndex < RowCount DO
-		SET RowIndex := RowIndex + 1;
-		SET XpathRow = CONCAT(
-				'//root/account['
-			,   RowIndex
-			,   ']');                         
-		INSERT INTO Temp_Account(SubscriberID, IsDeposit, LoginName, LoginNameWithPrefix, CustID, Username, Username2, RoleID, CurrencyID, CurrencyName, CreatedDate)
-		SELECT 	EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::SubscriberID'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::IsDeposit'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::LoginName')) 
-                , EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::LoginNameWithPrefix'))  
-                , EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::CustID'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::Username'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::Username2'))
-                , EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::RoleID'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::CurrencyID'))
-				, EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::CurrencyName'))
-                , EXTRACTVALUE(ip_AccountXml,CONCAT(XpathRow,'/attribute::CreatedDate'))
-		;
-	END WHILE;
-    
+    INSERT INTO Temp_Account(
+				SubscriberID, 
+				IsDeposit, 
+				LoginName, 
+				LoginNameWithPrefix,
+				CustID, 
+				Username, 
+				Username2, 
+				RoleID, 
+				CurrencyID, 
+				CurrencyName, 
+				CreatedDate)
+	SELECT *
+			 FROM
+			   JSON_TABLE(
+				ip_AccountJson,
+				 "$[*]" COLUMNS(
+				  SubscriberID 			BIGINT PATH "$.SubscriberID"         
+				, IsDeposit				TINYINT PATH "$.IsDeposit"   
+				, LoginName				VARCHAR(50) PATH "$.LoginName"   
+				, LoginNameWithPrefix 	VARCHAR(100) PATH "$.LoginNameWithPrefix"   
+				, CustID				BIGINT PATH "$.CustID"   
+				, Username				VARCHAR(50) PATH "$.Username"   
+				, Username2				VARCHAR(50) PATH "$.Username2"   
+				, RoleID				TINYINT	PATH "$.RoleID"   
+				, CurrencyID			SMALLINT PATH "$.CurrencyID"   
+				, CurrencyName			VARCHAR(50) PATH "$.CurrencyName"  
+                , CreatedDate			DATETIME PATH "$.CreatedDate"
+				 )
+			   ) AS  tmpAcc;
+               
+    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 	INSERT INTO FPS_DataCenter.Account
 		(
 		SubscriberID
@@ -90,7 +95,9 @@ BEGIN
 		, RoleID
 		, CurrencyID
 		, CurrencyName
-        , UNUN2
+        , FirstLoginNameID
+        , UsernameID
+		, Username2ID	
 		)
 	SELECT    
 		tac.SubscriberID
@@ -98,27 +105,31 @@ BEGIN
 		, tac.LoginName
         , tac.CreatedDate
         , tac.CustID
-		, tac.Username #(CASE WHEN CustID IS NULL THEN LoginName ELSE tac.Username END) AS Username
-		, (CASE WHEN tac.CustID IS NULL THEN LoginName ELSE tac.LoginNameWithPrefix END) AS Username2 #tac.Username2		
+		, tac.Username
+		, tac.Username2		
 		, tac.RoleID
 		, tac.CurrencyID
 		, tac.CurrencyName
-        , (CASE WHEN tac.IsDeposit = 1	THEN CONCAT(';',tac.LoginNameWithPrefix,';')
-										ELSE CONCAT(';', tac.UserName,';', tac.UserName2,';')
-										END)
+        , CRC32(LOWER(tac.LoginNameWithPrefix)) AS FirstLoginNameID
+        , CRC32(LOWER(tac.Username)) AS UsernameID
+		, CRC32(LOWER(tac.Username2)) AS Username2ID	
 	FROM		Temp_Account AS tac
-	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_Account_SubscriberID_FirstLoginName_UserName_Username2)
-				ON	tac.SubscriberID = acc.SubscriberID
-					AND acc.UNUN2 LIKE CONCAT('%;', REPLACE(tac.LoginNameWithPrefix,'_','\_'),';%')
+	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_ACCOUNT_SUBSCRIBERID_FIRSTLOGINNAME_USERNAME_USERNAME2)
+				ON CRC32(LOWER(tac.LoginNameWithPrefix)) IN (acc.FirstLoginNameID, acc.UsernameID, acc.Username2ID)
 	WHERE	acc.AccountID IS NULL;	
-    	
+
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	### PERFORMANCE
-    SET EndTime = Current_TimeStamp(4);
+    SET EndTime = CURRENT_TIMESTAMP(4);
 	
     SET Notes = CONCAT('NoOfAccount',(SELECT COUNT(1) FROM Temp_Account));
     INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
 	### PERFORMANCE 
-    
+    	
+    #============================================
+	DROP TEMPORARY TABLE IF EXISTS Temp_Account;
+    #==============================================
+	
 END$$
 DELIMITER ;

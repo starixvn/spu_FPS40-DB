@@ -49,7 +49,7 @@ BEGIN
     CREATE TEMPORARY TABLE Temp_UnhandleAction 
     (	
 		StagingTransID			BIGINT
-		, ActionResultKey		VARCHAR(30)
+		, ActionResult			VARCHAR(30)
         , CreatedDate			DATETIME	#	Date Only
     );
 
@@ -68,20 +68,17 @@ BEGIN
 				AND (su.SubscriberName IS NULL
 					OR su.Status = UnhandleStatus);
                     
-	INSERT INTO Temp_UnhandleAction (StagingTransID, ActionResultKey, CreatedDate)
+	INSERT INTO Temp_UnhandleAction (StagingTransID, ActionResult, CreatedDate)
     SELECT		rt.StagingTransID
 				, rt.ActionResult
                 , rt.CreatedDate
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     LEFT JOIN	FPS_DataCenter.ActionResult AS ac
-				ON ac.ActionResultKey = rt.ActionResult
+				ON ac.ActionResultCode = MD5(rt.ActionResult)
 	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
-				AND ac.ActionResultID IS NULL
+				AND ac.ActionResultCode IS NULL
 				AND rt.Isprocessed = 0; 
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    
-	SET SESSION autocommit = 0;
-	START  TRANSACTION;
+
     #==UNHANDLE SUBSCRIBER================================================================
 	INSERT INTO FPS_Admin.Subscriber (SubscriberName, CreatedDate, Status)
 	SELECT 		ts.SubscriberName
@@ -97,23 +94,26 @@ BEGIN
 	SET			rt.IsProcessed = UnhandleStatus; 
 
     #==UNHANDLE ACTION================================================================
-  
-	INSERT INTO FPS_DataCenter.ActionResult (ActionResultKey, CreatedDate, ActionStatus)
-	SELECT 		ts.ActionResultKey
+
+	INSERT INTO FPS_DataCenter.ActionResult (ActionResultCode, ActionResult, CreatedDate, ActionStatus)
+	SELECT 		MD5(ts.ActionResult)
+				, ts.ActionResult
 				, MIN(ts.CreatedDate)	AS CreatedDate
 				, UnhandleStatus		AS ActionStatus # UnhandleStatus
     FROM		Temp_UnhandleAction AS ts
-    GROUP BY	ts.ActionResultKey;
-    COMMIT;
-    
-    SET SESSION autocommit = 1;
-    
-    	### PERFORMANCE
+    GROUP BY	ts.ActionResult;
+        
+	### PERFORMANCE
     SET EndTime = Current_TimeStamp(4);
    
     SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
     INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
     Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
 	### PERFORMANCE 
+    
+	#=========================================================
+    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
+    #==========================================================
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
 END$$
 DELIMITER ;

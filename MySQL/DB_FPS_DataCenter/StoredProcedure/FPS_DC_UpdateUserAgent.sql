@@ -2,60 +2,64 @@ DELIMITER $$
 USE FPS_DataCenter$$
 DROP PROCEDURE IF EXISTS FPS_DC_UpdateUserAgent $$
 
-CREATE PROCEDURE FPS_DC_UpdateUserAgent(IN ip_UserAgentXML LONGTEXT)
+CREATE PROCEDURE FPS_DC_UpdateUserAgent(IN ip_UserAgentJson JSON)
 BEGIN
-	 /*
-		Created:	20190815@Terry.Nguyen
-		Task :		Update BroserID and OSID into table UserAgent
-		DB:			FPS_DataCenter
-		Original:
-
-		Revisions:
-		Param's Explanation (filtered by):
-	*/ 
-    
-	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
-	DECLARE RowCount INT UNSIGNED;
-	DECLARE XpathRow VARCHAR(255);    
-    
-    #=======================
-    
-    DROP TABLE IF EXISTS Temp_UserAgent;
+	 DROP TABLE IF EXISTS Temp_UserAgent;
 	
 	CREATE TEMPORARY TABLE Temp_UserAgent
     ( 
-		UserAgentID 		BIGINT (20) 
-	,	BrowserID 		INT 
-	,	OSID 		INT	
+		UserAgentCode 	VARCHAR(32)
+	,	BrowserID 		INT
+    ,	BrowserName		VARCHAR(100)
+	,	OSID 			INT	
+    ,	OSName			VARCHAR(100)
 	);
     
     #=======================
     
-    SET RowCount = extractValue(ip_UserAgentXML,'count(//root/useragent)');
-    
-    WHILE RowIndex < RowCount DO
-		SET RowIndex := RowIndex + 1;
-		SET XpathRow = CONCAT(
-				'//root/useragent['
-			,   RowIndex
-			,   ']');            
-            
-		#========1.GET DATA FROM XML TO TEMP TABLE===============================
-		
-		INSERT INTO Temp_UserAgent(UserAgentID, BrowserID, OSID)
-		SELECT 	EXTRACTVALUE(ip_UserAgentXML,CONCAT(XpathRow,'/attribute::UserAgentID'))
-				, EXTRACTVALUE(ip_UserAgentXML,CONCAT(XpathRow,'/attribute::BrowserID'))
-				 , EXTRACTVALUE(ip_UserAgentXML,CONCAT(XpathRow,'/attribute::OSID')				
-		);    
-	END WHILE;
+    INSERT INTO Temp_UserAgent(UserAgentCode, BrowserID, BrowserName, OSID, OSName)
+		SELECT *
+		FROM
+			   JSON_TABLE(
+				ip_UserAgentJson,
+				 "$[*]" COLUMNS(
+				  UserAgentCode 	VARCHAR(32) PATH "$.UserAgentCode"         
+				, BrowserID			INT PATH "$.BrowserId" 
+                , BrowserName		VARCHAR(100) PATH "$.BrowserName" 
+				, OSID				INT PATH "$.OSId"  
+                , OSName		VARCHAR(100) PATH "$.OSName" 
+				 )) AS  tmpUA;
     
      #=======================
+     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+     # Insert Browser
+     INSERT IGNORE INTO FPSA_DataCenter.Browser(BrowserName, CreatedDate)
+     SELECT tmpBr.BrowserName, Now() FROM Temp_UserAgent AS tmpBr GROUP BY tmpBr.BrowserName;
      
-     UPDATE FPS_DataCenter.UserAgent as us INNER JOIN Temp_UserAgent AS tmp 
-     ON us.UserAgentID = tmp.UserAgentID
-     SET us.BrowserID = tmp.BrowserID,
-		 us.OSID = tmp.OSID	;
-   
+     # Insert OS
+     INSERT IGNORE INTO FPSA_DataCenter.OS(OSName, CreatedDate)
+     SELECT tmpOs.OSName, Now() FROM Temp_UserAgent AS tmpOs GROUP BY tmpOs.OSName;
+     
+     # Update Browser and OS Id into temporary table
+     UPDATE Temp_UserAgent as tmpAU 
+		INNER JOIN FPSA_DataCenter.OS AS os ON tmpAU.OSName = os.OSName
+        INNER JOIN FPSA_DataCenter.Browser AS br ON tmpAU.BrowserName = br.BrowserName
+     SET  tmpAU.BrowserID = br.BrowserID,
+				tmpAU.OSID = os.OSID;             
+                
+     # Update Browser and OS into User Agent table
+     UPDATE 	FPSA_DataCenter.UserAgent AS us 
+     INNER JOIN	Temp_UserAgent AS tmp 
+				ON us.UserAgentCode = tmp.UserAgentCode
+     SET 		us.BrowserID = tmp.BrowserID
+				, us.OSID = tmp.OSID
+                , us.Browser = tmp.BrowserName
+                , us.OS = tmp.OSName;
+			
+	#=======================
+	DROP TABLE IF EXISTS Temp_UserAgent;
+	#=======================
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 
 DELIMITER ;

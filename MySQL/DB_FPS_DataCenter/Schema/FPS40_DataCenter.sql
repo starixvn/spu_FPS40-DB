@@ -82,13 +82,15 @@ CREATE TABLE FPS_DataCenter.Device(
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL				
 		, CreatedDate		DATETIME							NOT NULL
         , LastArchivedDate	DATETIME							NULL
-        , UNUN2				VARCHAR(100)	CHARACTER SET utf8	NULL			
+        , FirstLoginNameID	BIGINT								NULL			
+        , UserNameID		BIGINT								NULL
+        , UserName2ID		BIGINT								NULL
         
         , PRIMARY KEY	PK_Account_AccountID(AccountID)        
         , INDEX			IX_Account_CustID(CustID)
         , INDEX			IX_Account_SubscriberID_Username(SubscriberID, Username)
         , INDEX			IX_Account_SubscriberID_Username2(SubscriberID, Username2)
-        , INDEX			IX_Account_SubscriberID_FirstLoginName_UserName_Username2(SubscriberID, UNUN2)
+        , INDEX			IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID(SubscriberID, FirstLoginNameID, UserNameID, UserName2ID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Transactions============================================
@@ -99,18 +101,20 @@ CREATE TABLE FPS_DataCenter.Device(
 		, FingerprintCode	VARCHAR(640)						NULL
         , FingerprintMoreInfo	TEXT							NULL
 		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
-		, AccountID			BIGINT								NOT NULL
-		, SubscriberID		SMALLINT							NULL	
+		, AccountID			BIGINT								NULL
+		, SubscriberID		SMALLINT							NULL
+		, SubscriberPrefix	VARCHAR(50)							NULL
 		, TransDate			DATETIME							NOT	NULL
 		, CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL
 		, IP				VARCHAR(50)							NULL
         , IPRangeLocationID	BIGINT								NULL
 		, PluginID			BIGINT								NULL
 		, Flagged			SMALLINT							NULL		COMMENT 'captcha & browserless'
-		, SubURLID			SMALLINT							NULL
-		, ActionResultID	SMALLINT							NULL
-		, UserAgentID		INT									NULL        
+		, SubURLID			VARCHAR(32)							NULL
+		, ActionResultCode	VARCHAR(32)							NULL
+		, UserAgentCode		VARCHAR(32)							NULL        
         , StagingTransID	BIGINT			UNIQUE				NOT NULL
+        , LoginNameID		INT									NOT NULL
         
         , PRIMARY KEY	PK_Transaction_TransID(TransID)        
         , INDEX			IX_Transaction_DeviceID(DeviceID)
@@ -137,12 +141,12 @@ CREATE TABLE FPS_DataCenter.Device(
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
-		ActionResultID			SMALLINT		AUTO_INCREMENT
-		, ActionResultKey		VARCHAR(100)	CHARACTER SET utf8	NOT NULL
+		ActionResultCode		VARCHAR(32)		
+		, ActionResult			VARCHAR(100)	CHARACTER SET utf8	NOT NULL
         , ActionStatus			TINYINT			NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
         , CreatedDate			DATETIME		NOT NULL	COMMENT 'Date Only'
         
-        , PRIMARY KEY 	PK_ActionResult_ActionResultID(ActionResultID)
+        , PRIMARY KEY 	PK_ActionResult_ActionResultCode(ActionResultCode)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
@@ -177,16 +181,14 @@ CREATE TABLE FPS_DataCenter.Device(
 
 # =======UserAgent============================================
 	CREATE TABLE FPS_DataCenter.UserAgent(
-		UserAgentID		INT				AUTO_INCREMENT	NOT NULL
-		, UserAgent		TEXT							NOT NULL
-		, UserAgentCode	VARCHAR(64)						NOT NULL
+		UserAgentCode	VARCHAR(32)						NOT NULL
+		, UserAgent		TEXT							NOT NULL		
         , BrowserID		SMALLINT						NULL
         , OSID			SMALLINT						NULL
         , OS			VARCHAR(100)					NULL
         , Browser		VARCHAR(100)					NULL
         
-        , PRIMARY KEY	PK_UserAgent_UserAgentID(UserAgentID)
-        , INDEX			IX_UserAgent_UserAgentCode(UserAgentCode)
+        , PRIMARY KEY	PK_UserAgent_UserAgentCode(UserAgentCode)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ======EvidenceGroup=============================================

@@ -13,7 +13,7 @@ CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 CREATE TABLE FPS_RawTransaction.RawTransaction(	
 	LoginName					VARCHAR(50) CHARACTER SET utf8	NOT NULL	COMMENT 'NVARCHAR'
 	, SubscriberName			VARCHAR(50) 					NOT NULL
-	, TransDate					DATETIME	 					NOT NULL
+	, TransDate					TIMESTAMP(4) 					NOT NULL
 	, CreatedDate				DATETIME						NOT NULL	COMMENT 'Date Only'
 	, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
 	, FingerprintCode			VARCHAR(640)					NULL		COMMENT 'Device Fingerprint Codes, the hashcode bases on the set attributes'
