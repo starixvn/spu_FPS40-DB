@@ -3,7 +3,7 @@ DROP procedure IF EXISTS `FPS_DC_GetEvidenceByTargetId`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_GetEvidenceByTargetId` (IN targetId BIGINT, IN objType TINYINT, IN subIdList LONGTEXT, IN isMaster TINYINT)
+CREATE PROCEDURE `FPS_DC_GetEvidenceByTargetId` (IN targetId BIGINT, IN targetType TINYINT, IN userId INT, IN isMaster TINYINT)
 BEGIN
 /*
 	Created: 20190909@Harvey
@@ -14,15 +14,8 @@ BEGIN
 	Revisions:
 	Param's Explanation (filtered by):
     
-    CALL FPS_DC_GetEvidenceByTargetId (322,1,'6',0);
-*/
-	DROP TEMPORARY TABLE IF EXISTS tmp_SubId;
-	CREATE TEMPORARY TABLE tmp_SubId( subId INT );
-    
-	SET @sql = CONCAT("INSERT INTO tmp_SubId (subId) VALUES ('", REPLACE(subIdList, ",", "'),('"),"');");
-	PREPARE stmt1 FROM @sql;
-	EXECUTE stmt1;
-    
+    CALL FPS_DC_GetEvidenceByTargetId (322,1,2809,0);
+*/    
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
     SELECT te.TargetEvidenceID
@@ -35,16 +28,15 @@ BEGIN
 		,sub.SubscriberName
 		,te.IsCreatedByMaster
 	FROM FPS_DataCenter.TargetEvidence te
-	INNER JOIN FPS_DataCenter.EvidenceType et ON te.EvidenceTypeID = et.EvidenceTypeID
-	INNER JOIN FPS_Admin.Subscriber sub ON te.SubscriberID = sub.SubscriberID
+		INNER JOIN FPS_DataCenter.EvidenceType et ON te.EvidenceTypeID = et.EvidenceTypeID
+		INNER JOIN FPS_Admin.Subscriber sub ON te.SubscriberID = sub.SubscriberID
 	WHERE te.TargetID = targetId
-		AND te.TargetType = objType
+		AND te.TargetType = targetType
 		AND (
 			te.IsCreatedByMaster = isMaster
-			OR sub.SubscriberID IN (SELECT subId FROM tmp_SubId));
+			OR sub.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = userId));
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    DROP TABLE tmp_SubId;
 
 END$$
 

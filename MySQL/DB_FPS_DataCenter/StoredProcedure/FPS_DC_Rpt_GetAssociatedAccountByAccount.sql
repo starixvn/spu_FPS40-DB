@@ -3,7 +3,7 @@ DROP procedure IF EXISTS `FPS_DC_Rpt_GetAssociatedAccountByAccount`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_Rpt_GetAssociatedAccountByAccount` (IN custIds LONGTEXT, IN rootAccountId BIGINT)
+CREATE PROCEDURE `FPS_DC_Rpt_GetAssociatedAccountByAccount` (IN custIds LONGTEXT, IN rootAccountId BIGINT, IN userId INT, IN isMaster TINYINT)
 BEGIN
 /*
 	Created: 20190823@Harvey
@@ -14,7 +14,7 @@ BEGIN
 	Revisions:
 	Param's Explanation (filtered by):
     
-    CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('4139416,3945234,7777983', 397);
+    CALL `FPS_DataCenter`.`FPS_DC_Rpt_GetAssociatedAccountByAccount`('4139416,3945234,7777983', 397,2809,0);
 
 */
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
@@ -42,7 +42,8 @@ BEGIN
 	INNER JOIN FPS_DataCenter.Transaction trans2 ON trans.DeviceID = trans2.DeviceID
 		AND trans2.AccountID = rootAccountId
 	LEFT JOIN FPS_DataCenter.TargetEvidence tarEvi ON acc.AccountID = tarEvi.TargetID AND tarEvi.TargetType = 0
-	WHERE trans.AccountID IN (SELECT AccountID FROM tmp_CustId)
+	WHERE trans.AccountID IN (SELECT AccountID FROM tmp_CustId) 
+		AND (tarEvi.IsCreatedByMaster = isMaster OR tarEvi.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = userId))
 	GROUP BY trans.AccountID
 		,acc.CreatedDate;
     
