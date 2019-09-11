@@ -33,7 +33,6 @@ BEGIN
         ,	ua.Browser AS `Browser`
         ,	url.URL AS `Domain`
         ,	t.IP AS `IP`
-        ,	t.IPRangeLocationID AS `IPRangeLocationID`
 	FROM FPS_DataCenter.Transaction AS t
 		INNER JOIN FPS_DataCenter.ActionResult AS ar ON t.ActionResultID = ar.ActionResultID
         INNER JOIN FPS_DataCenter.SubscriberURL AS url ON t.SubURLID = url.SubscriberURLID

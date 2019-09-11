@@ -15,7 +15,7 @@ BEGIN
 		Param's Explanation (filtered by):
 			- @AccountEvidenceStatus: 1 (clean), 2 (to be flagged), 0 (central point)
             
-		call FPS_DataCenter.FPS_DC_GetCustomerGeneralInfo(9907, 1, 8);
+		call FPS_DataCenter.FPS_DC_GetCustomerGeneralInfo(7180, 0, 16994226);
 	*/
     
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
