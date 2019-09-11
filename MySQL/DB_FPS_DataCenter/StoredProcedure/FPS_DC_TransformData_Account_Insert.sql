@@ -1,25 +1,21 @@
-/*
-	Created: 20190730@Casey.Huynh
-	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
-	DB: FPS_RawTransaction(rtaging)
-	Original:
-
-	Revisions:
-	Param's Explanation (filtered by):
-*/
 
 DELIMITER $$
 
 USE FPS_DataCenter$$
 
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert$$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account_Insert(IN ip_AccountJson JSON)
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Account_Insert$$
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_Insert(IN ip_AccountJson JSON)
 BEGIN
-	DECLARE	UnhandleStatus			TINYINT DEFAULT 2;
-    DECLARE DeviceStatusNew			TINYINT DEFAULT 1;			# New Device
-    DECLARE DeviceStatusExisting	TINYINT DEFAULT 2;			# Existing Device has not been recover
-    DECLARE DeviceStatusRecover		TINYINT DEFAULT 3;			# Recover Device	
-    
+	/*
+	Created: 20190730@Casey.Huynh
+	Task : Insert Account
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+	*/
+
     ####
 	### PERFORMANCE: START
 	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_Account_Insert' ;
@@ -38,17 +34,17 @@ BEGIN
 	
 	CREATE TEMPORARY TABLE Temp_Account
     ( 
-        SubscriberID		BIGINT
-        , IsDeposit			TINYINT
-		, LoginName			VARCHAR(50)
-        , LoginNameWithPrefix VARCHAR(100)
-		, CreatedDate		DATETIME        
-		, CustID			BIGINT
-		, Username			VARCHAR(50)
-		, Username2			VARCHAR(50)
-		, RoleID			TINYINT			
-		, CurrencyID		SMALLINT
-		, CurrencyName		VARCHAR(50)        
+        SubscriberID			BIGINT
+        , IsDeposit				TINYINT
+		, LoginName				VARCHAR(50)
+        , LoginNameWithPrefix	VARCHAR(100)
+		, CreatedDate			DATETIME        
+		, CustID				BIGINT
+		, Username				VARCHAR(50)
+		, Username2				VARCHAR(50)
+		, RoleID				TINYINT			
+		, CurrencyID			SMALLINT
+		, CurrencyName			VARCHAR(50)        
 	);   
       
     INSERT INTO Temp_Account(
@@ -114,7 +110,7 @@ BEGIN
         , CRC32(LOWER(tac.Username)) AS UsernameID
 		, CRC32(LOWER(tac.Username2)) AS Username2ID	
 	FROM		Temp_Account AS tac
-	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_ACCOUNT_SUBSCRIBERID_FIRSTLOGINNAME_USERNAME_USERNAME2)
+	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID)
 				ON CRC32(LOWER(tac.LoginNameWithPrefix)) IN (acc.FirstLoginNameID, acc.UsernameID, acc.Username2ID)
 	WHERE	acc.AccountID IS NULL;	
 

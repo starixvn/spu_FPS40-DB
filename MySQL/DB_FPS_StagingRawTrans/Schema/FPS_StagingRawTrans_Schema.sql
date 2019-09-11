@@ -8,10 +8,10 @@ Revisions:
 Reviewer: 
 */
 
-CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
+CREATE DATABASE IF NOT EXISTS FPSS_RawTransaction;
 
 CREATE TABLE FPS_RawTransaction.RawTransaction(	
-	LoginName					VARCHAR(50) CHARACTER SET utf8	NOT NULL	COMMENT 'NVARCHAR'
+	LoginName					VARCHAR(50)						NOT NULL
 	, SubscriberName			VARCHAR(50) 					NOT NULL
 	, TransDate					TIMESTAMP(4) 					NOT NULL
 	, CreatedDate				DATETIME						NOT NULL	COMMENT 'Date Only'

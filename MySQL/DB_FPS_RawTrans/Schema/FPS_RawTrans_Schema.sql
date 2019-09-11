@@ -2,15 +2,15 @@
 Creator: 20190521@John
 Task:	 FPS Reform [Redmine ID: 105252]
 Server:  
-DBName:	 FPS_DataCenter
+DBName:	 FPSB_DataCenter
 
-Reviewer: Billy
+Reviewer: 
 */
 
 CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 
 CREATE TABLE FPS_RawTransaction.RawTransaction (
-	LoginName					VARCHAR(50) CHARACTER SET utf8MB4	NOT NULL	COMMENT 'NVARCHAR'
+	LoginName					VARCHAR(50) 					 	NOT NULL	
 	, SubscriberName			VARCHAR(50) 						NOT NULL
 	, TransDate					TIMESTAMP(4)	 					NOT NULL
 	, CreatedDate				DATETIME	 						NOT NULL	COMMENT 'Date Only'

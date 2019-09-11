@@ -1,4 +1,10 @@
-/*
+DELIMITER $$
+
+USE FPS_RawTransaction$$
+DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_TransformData_GetPackage;
+CREATE PROCEDURE FPS_RawTransaction.FPS_RT_TransformData_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT)
+BEGIN
+	/*
 	Created: 20190610@Casey.Huynh
 	Task : Get Transaction List has not transferred (processed) to FPS_DataCenter DB
 	DB: FPS_RawTransaction(Staging)
@@ -7,16 +13,8 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-
-DELIMITER $$
-
-USE FPS_RawTransaction$$
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_RawTransaction_Process_GetPackage;
-CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTransaction_Process_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT)
-BEGIN
-
 	### PERFORMANCE: START
-	DECLARE		SPName		varchar(200) DEFAULT 'FPS_RT_RawTransaction_Process_GetPackage' ;
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_RT_TransformData_GetPackage' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	varchar(500) DEFAULT 'GET Package: ';
 	DECLARE 	StartTime	TIMESTAMP(4);

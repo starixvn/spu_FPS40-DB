@@ -1,24 +1,22 @@
-/*
-	Created: 20190730@Casey.Huynh
-	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
-	DB: FPS_RawTransaction(rtaging)
-	Original:
 
-	Revisions:
-	Param's Explanation (filtered by):
-*/
 
 DELIMITER $$
 
 USE FPS_DataCenter$$
 
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_GetNULLAccountIDList$$
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Transaction_GetNullAccountIDTransList$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_GetNULLAccountIDList(IN ip_Size INT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Transaction_GetNullAccountIDTransList(IN ip_Size INT)
 BEGIN
-		DECLARE 	FromID	INT;
-    DECLARE		ToID	BIGINT;
-    
+   /*
+	Created: 20190730@Casey.Huynh
+	Task : Get Translist within Null Account
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
 	### PERFORMANCE: START
 	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_GetNULLAccountIDList' ;
     DECLARE		GroupID 	INT;

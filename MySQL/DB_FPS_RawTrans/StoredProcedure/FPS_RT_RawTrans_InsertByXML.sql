@@ -20,7 +20,7 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS Temp_RawTransaction;
     
 	CREATE TEMPORARY TABLE Temp_RawTransaction (
-		LoginName					VARCHAR(50) CHARACTER SET UTF8MB4 NOT NULL	COMMENT 'NVARCHAR'
+		LoginName					VARCHAR(50) 					NOT NULL	
 		, SubscriberName			VARCHAR(50) 					NOT NULL
 		, TransDate					TIMESTAMP(4)					NOT NULL
 		, DeviceCode				VARCHAR(32) 					NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'

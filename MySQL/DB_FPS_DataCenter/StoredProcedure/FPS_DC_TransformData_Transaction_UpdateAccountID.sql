@@ -1,23 +1,21 @@
-/*
+DELIMITER $$
+
+USE FPS_DataCenter$$
+
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Transaction_UpdateAccountID$$
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Transaction_UpdateAccountID(IN ip_AccountIDJson JSON)
+BEGIN
+    /*
 	Created: 20190730@Casey.Huynh
-	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
-	DB: FPS_RawTransaction(rtaging)
+	Task : Update Transaction AccountID 
+	DB: FPS_DataCenter
 	Original:
 
 	Revisions:
 	Param's Explanation (filtered by):
 */
-
-DELIMITER $$
-
-USE FPS_DataCenter$$
-
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_UpdateDeviceID$$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_UpdateDeviceID(IN ip_DeviceIDJson JSON)
-BEGIN
-    
 	### PERFORMANCE: START
-	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_UpdateAccountID' ;
+	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_TransformData_Transaction_UpdateAccountID' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	varchar(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
@@ -39,18 +37,18 @@ BEGIN
 			 StagingTransID
 		)
 	SELECT	tmpAcc.StagingTransID
-	FROM JSON_TABLE(	ip_DeviceIDJson
+	FROM JSON_TABLE(	ip_AccountIDJson
 						, "$[*]" COLUMNS(	StagingTransID 	BIGINT PATH "$.StagingTransID")        
-					) AS tmpAcc;                    
-    
+					) AS tmpAcc;
+                 
 	UPDATE 		FPS_DataCenter.Transaction AS ts
     INNER JOIN	temp_Transaction AS tmpAcc
 				ON ts.StagingTransID = tmpAcc.StagingTransID
-	INNER JOIN	FPS_DataCenter.DeviceCode AS dc
-				ON ts.DeviceCode = dc.DeviceCode
-	SET			ts.DeviceID = dc.DeviceID;    
+	INNER JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID)
+				ON ts.LoginNameWithPrefixID IN (acc.FirstLoginNameID, acc.UsernameID, acc.Username2ID)
+	SET			ts.AccountID = acc.AccountID;   
     	
-    	### PERFORMANCE
+	### PERFORMANCE
     SET EndTime = CURRENT_TIMESTAMP(4);  
 
     INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
@@ -58,6 +56,7 @@ BEGIN
 	### PERFORMANCE 
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+            
             
 END$$
 DELIMITER ;

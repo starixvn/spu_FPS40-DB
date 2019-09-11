@@ -1,33 +1,34 @@
-/*
+
+DELIMITER $$
+
+USE FPSB_DataCenter$$
+
+DROP PROCEDURE IF EXISTS FPSB_DataCenter.FPSB_DC_TransformData_Account_GetFromRawTransaction$$
+
+CREATE PROCEDURE FPSB_DataCenter.FPSB_DC_TransformData_Account_GetFromRawTransaction(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
+BEGIN
+	/*
 	Created: 20190730@Casey.Huynh
-	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
-	DB: FPS_RawTransaction(rtaging)
+	Task : Get Account List to Process From DrawTransaction
+	DB: FPSB_DataCenter
 	Original:
 
 	Revisions:
 	Param's Explanation (filtered by):
-*/
+	*/
 
-DELIMITER $$
-
-USE FPS_RawTransaction$$
-
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Account$$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Account(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
-BEGIN
-	
     DECLARE		HandleStatus TINYINT DEFAULT 1;
 
 	### PERFORMANCE: START
-	DECLARE		SPName		varchar(200) DEFAULT 'FPS_DC_DataCenter_Process_Account' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPSB_DC_DataCenter_Process_Account' ;
     DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	varchar(500) DEFAULT 'Start Get MinMax';
+    DECLARE 	Notes	 	VARCHAR(500) DEFAULT 'Start Get MinMax';
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	int ;
+	DECLARE		Duration 	INT ;
     
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = Current_TimeStamp(4);
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPSB_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = CURRENT_TIMESTAMP(4);
     
     ### PERFORMANCE: END
 
@@ -57,8 +58,8 @@ BEGIN
                 , rt.LoginName
 				, MIN(rt.CreatedDate)
                 , CRC32(LOWER(CONCAT(su.SubscriberPrefix, rt.LoginName))) AS LoginNameWithPrefixID
-	FROM		FPS_RawTransaction.RawTransaction AS rt
-    INNER JOIN	FPS_Admin.Subscriber AS su
+	FROM		FPSB_RawTransaction.RawTransaction AS rt
+    INNER JOIN	FPSB_Admin.Subscriber AS su
 				ON rt.SubscriberName = su.SubscriberName AND su.Status = HandleStatus
     WHERE		(rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID)
 				AND rt.IsProcessed = 0
@@ -67,12 +68,12 @@ BEGIN
 				, rt.LoginName;  
   
 	#========INSERT: URL if not Existing============================================================================ 
-    INSERT INTO FPS_DataCenter.SubscriberURL (SubscriberID, URL, CreatedDate)
+    INSERT INTO FPSB_DataCenter.SubscriberURL (SubscriberID, URL, CreatedDate)
     SELECT 		ta.SubscriberID
 				, ta.URL
 				, MIN(ta.CreatedDate) AS CreatedDate
     FROM		Temp_Account AS ta
-	LEFT JOIN	FPS_DataCenter.SubscriberURL AS ur
+	LEFT JOIN	FPSB_DataCenter.SubscriberURL AS ur
 				ON ur.SubscriberID = ta.SubscriberID
                 AND	ur.URL = ta.URL
 	WHERE		ur.URL IS NULL
@@ -85,19 +86,20 @@ BEGIN
 				, ta.IsDeposit
 				, MIN(ta.CreatedDate) AS CreatedDate
 	FROM		Temp_Account AS ta
-	LEFT JOIN	FPS_DataCenter.Account AS ac USE INDEX (IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID)
-				ON ta.LoginNameWithPrefixID IN (ac.FirstLoginNameID, ac.UsernameID, ac.Username2ID)
+	LEFT JOIN	FPSB_DataCenter.Account AS ac USE INDEX (IX_ACCOUNT_SUBSCRIBERID_FIRSTLOGINNAMEID_USERNAMEID_USERNAME2ID)
+				ON  ta.SubscriberID = ac.SubscriberID
+					AND ta.LoginNameWithPrefixID IN (ac.FirstLoginNameID, ac.UsernameID, ac.Username2ID)
 	WHERE		ac.AccountID IS NULL
 	GROUP BY	ta.LoginName, ta.SubscriberPrefix, ta.SubscriberName, ta.SubscriberID, ta.IsDeposit;	
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
     
     ### PERFORMANCE
-    SET EndTime = Current_TimeStamp(4);
+    SET EndTime = CURRENT_TIMESTAMP(4);
    
     SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
+    INSERT INTO FPSB_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
     
 	#============================================
     DROP TEMPORARY TABLE IF EXISTS Temp_Account;

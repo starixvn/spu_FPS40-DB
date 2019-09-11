@@ -1,8 +1,10 @@
 DELIMITER $$
-USE FPS_DataCenter$$
-DROP PROCEDURE IF EXISTS FPS_DC_GetUserAgent $$
 
-CREATE PROCEDURE FPS_DC_GetUserAgent(IN in_size INT)
+USE FPS_DataCenter$$
+
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_UserAgent_GetNullBrowserOSList $$
+
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_UserAgent_GetNullBrowserOSList(IN in_size INT)
 BEGIN
 	 /*
 		Created:	20190815@Terry.Nguyen
@@ -19,7 +21,7 @@ BEGIN
 	FROM		FPSA_DataCenter.UserAgent	
     WHERE 		BrowserID IS NULL 
 				AND OSID IS NULL 
-    LIMIT in_size; 
+    LIMIT 		in_size; 
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
     
 END$$

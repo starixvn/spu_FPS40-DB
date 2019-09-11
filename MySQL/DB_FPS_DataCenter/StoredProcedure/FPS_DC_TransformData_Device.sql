@@ -1,20 +1,21 @@
-/*
+
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Device$$
+
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Device(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
+BEGIN
+	/*
 	Created: 20190730@Casey.Huynh
-	Task : Get Package to Process Data (MinrtagingTransID to MaxrtagingTransID)
-	DB: FPS_RawTransaction(rtaging)
+	Task : Transform Device Info
+	DB: FPS_DataCenter
 	Original:
 
 	Revisions:
 	Param's Explanation (filtered by):
-*/
-
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_Device$$
-
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_Device(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
-BEGIN
-	
+	*/
+    
 	DECLARE	UnhandleStatus		TINYINT DEFAULT 2;
 	DECLARE DeviceStatusNew			TINYINT DEFAULT 1;			# New Device
 	DECLARE DeviceStatusOld			TINYINT DEFAULT 2;			# Old Device
@@ -89,7 +90,7 @@ BEGIN
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     INNER JOIN	FPS_Admin.Subscriber su
 				ON rt.SubscriberName = su.SubscriberName
-	INNER JOIN	FPS_DataCenter.Account AS ac USE INDEX (IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID)
+	INNER JOIN	FPS_DataCenter.Account AS ac USE INDEX (IX_ACCOUNT_SUBSCRIBERID_FIRSTLOGINNAMEID_USERNAMEID_USERNAME2ID)
 				ON CRC32(LOWER(CONCAT(su.SubscriberPrefix, rt.LoginName))) IN (ac.FirstLoginNameID, ac.UsernameID, ac.Username2ID)
     WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID                
                 AND rt.IsProcessed = 0

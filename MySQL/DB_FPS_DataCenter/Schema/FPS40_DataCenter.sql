@@ -72,14 +72,14 @@ CREATE TABLE FPS_DataCenter.Device(
 	CREATE TABLE FPS_DataCenter.`Account`(
 		AccountID			BIGINT			AUTO_INCREMENT		NOT NULL
         , SubscriberID		SMALLINT							NOT NULL
-        , IsDeposit			TINYINT						NULL
-        , FirstLoginName	VARCHAR(50)		CHARACTER SET utf8	NOT NULL
+        , IsDeposit			TINYINT								NULL
+        , FirstLoginName	VARCHAR(50)							NOT NULL
 		, CustID			BIGINT								NULL
-		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, Username2			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, RoleID			TINYINT						NULL
-		, CurrencyID		SMALLINT						NULL
-		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL				
+		, Username			VARCHAR(50)							NULL
+		, Username2			VARCHAR(50)							NULL
+		, RoleID			TINYINT								NULL
+		, CurrencyID		SMALLINT							NULL
+		, CurrencyName		VARCHAR(50)							NULL				
 		, CreatedDate		DATETIME							NOT NULL
         , LastArchivedDate	DATETIME							NULL
         , FirstLoginNameID	BIGINT								NULL			
@@ -100,21 +100,19 @@ CREATE TABLE FPS_DataCenter.Device(
         , DeviceCode		VARCHAR(32)							NULL
 		, FingerprintCode	VARCHAR(640)						NULL
         , FingerprintMoreInfo	TEXT							NULL
-		, LoginName			VARCHAR(50)		CHARACTER SET utf8	NOT NULL	
+		, LoginName			VARCHAR(50)							NOT NULL	
 		, AccountID			BIGINT								NULL
 		, SubscriberID		SMALLINT							NULL
-		, SubscriberPrefix	VARCHAR(50)							NULL
-		, TransDate			DATETIME							NOT	NULL
+		, TransDate			TIMESTAMP(4)						NOT	NULL
 		, CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL
 		, IP				VARCHAR(50)							NULL
-        , IPRangeLocationID	BIGINT								NULL
 		, PluginID			BIGINT								NULL
 		, Flagged			SMALLINT							NULL		COMMENT 'captcha & browserless'
 		, SubURLID			VARCHAR(32)							NULL
 		, ActionResultCode	VARCHAR(32)							NULL
 		, UserAgentCode		VARCHAR(32)							NULL        
         , StagingTransID	BIGINT			UNIQUE				NOT NULL
-        , LoginNameID		INT									NOT NULL
+        , LoginNameWithPrefixID BIGINT							NULL
         
         , PRIMARY KEY	PK_Transaction_TransID(TransID)        
         , INDEX			IX_Transaction_DeviceID(DeviceID)
@@ -142,7 +140,7 @@ CREATE TABLE FPS_DataCenter.Device(
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
 		ActionResultCode		VARCHAR(32)		
-		, ActionResult			VARCHAR(100)	CHARACTER SET utf8	NOT NULL
+		, ActionResult			VARCHAR(100)	NOT NULL
         , ActionStatus			TINYINT			NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
         , CreatedDate			DATETIME		NOT NULL	COMMENT 'Date Only'
         
@@ -195,7 +193,7 @@ CREATE TABLE FPS_DataCenter.Device(
 	CREATE TABLE FPS_DataCenter.EvidenceGroup(
 		EvidenceGroupID			TINYINT			AUTO_INCREMENT		NOT NULL
 		, EvidenceGroupName		VARCHAR(50)							NOT NULL
-		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET utf8	NULL
+		, EvidenceGroupDesc		VARCHAR(200)	CHARACTER SET UTF8MB4	NULL
 		, OrderNo				SMALLINT							NULL
 		, CreatedDate			DATETIME							NOT NULL
 		, CreatedBy				INT									NOT NULL
@@ -210,7 +208,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, EvidenceGroupID	TINYINT								NOT NULL
 		, EvidenceTypeCode	VARCHAR(10)							NOT NULL
 		, EvidenceTypeName	VARCHAR(50)							NOT NULL
-		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET utf8	NULL
+		, EvidenceTypeDesc	VARCHAR(200)	CHARACTER SET UTF8MB4	NULL
 		, OrderNo			SMALLINT							NOT NULL
 		, CreatedDate		DATETIME							NOT NULL
 		, CreatedBy			INT									NOT NULL
@@ -226,7 +224,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, EvidenceTypeID	SMALLINT							NOT NULL
 		, EvidenceGroupID	TINYINT								NOT NULL
 		, EvidenceCode		VARCHAR(10)							NOT NULL
-		, Remark			VARCHAR(500)	CHARACTER SET utf8	NULL
+		, Remark			VARCHAR(500)	CHARACTER SET UTF8MB4	NULL
 		, TargetID			BIGINT								NOT NULL
 		, TargetType		TINYINT								NOT NULL
 		, TargetLevel		TINYINT								NOT NULL
@@ -247,7 +245,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, DeviceID		BIGINT								NOT NULL
 		, AccountID		BIGINT								NOT NULL
 		, SubscriberID	SMALLINT							NOT NULL
-		, Remark		VARCHAR(200)	CHARACTER SET utf8	NULL
+		, Remark		VARCHAR(200)	CHARACTER SET UTF8MB4	NULL
 		, CreatedDate	DATETIME							NOT NULL
 		, CreatedBy		INT									NOT NULL
 		, IsActive		TINYINT						NOT NULL
@@ -260,19 +258,19 @@ CREATE TABLE FPS_DataCenter.Device(
 	CREATE TABLE FPS_DataCenter.LogType(
 		LogTypeID				SMALLINT		AUTO_INCREMENT		NOT NULL
 		, LogTypeName			VARCHAR(50)							NULL
-		, LogTypeDescription	VARCHAR(200)	CHARACTER SET utf8	NULL
+		, LogTypeDescription	VARCHAR(200)	CHARACTER SET UTF8MB4	NULL
         
         , PRIMARY KEY	PK_LogType_LogTypeID(LogTypeID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========UserLog===========================================
 	CREATE TABLE FPS_DataCenter.UserLog(
-		LogTypeID		SMALLINT							NOT NULL
-		, SPName		VARCHAR(100)						NULL
-		, SubscriberID	INT									NULL
-		, LogInfo		VARCHAR(500)	CHARACTER SET utf8	NULL
-		, CreatedDate	DATETIME							NULL
-		, CreatedBy		INT									NULL
+		LogTypeID		SMALLINT								NOT NULL
+		, SPName		VARCHAR(100)							NULL
+		, SubscriberID	INT										NULL
+		, LogInfo		VARCHAR(500)	CHARACTER SET UTF8MB4	NULL
+		, CreatedDate	DATETIME								NULL
+		, CreatedBy		INT										NULL
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===================================================

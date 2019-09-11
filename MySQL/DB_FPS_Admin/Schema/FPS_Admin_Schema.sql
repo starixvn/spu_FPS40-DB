@@ -17,9 +17,9 @@ CREATE TABLE FPS_Admin.Subscriber (
 ,	SubScriberPrefix	VARCHAR(30) NULL
 ,	CreatedDate			DATETIME	 	NULL
 ,	CreatedBy			INT NULL
-,	IsDeposit			TINYINT(1)	NULL				
-,	Status				TINYINT(1)	NOT NULL					COMMENT '0: Inactive; 1: Active; 2: Unhandle (sub that not integrate, is insert new from transaction)'
-,	IsTest				TINYINT(1)	NULL
+,	IsDeposit			TINYINT	NULL				
+,	Status				TINYINT	NOT NULL					COMMENT '0: Inactive; 1: Active; 2: Unhandle (sub that not integrate, is insert new from transaction)'
+,	IsTest				TINYINT	NULL
 ,	PRIMARY KEY	PK_Subscriber_SubscriberID (SubscriberID)
 ,	INDEX IX_Subscriber_SubscriberName_SubScriberPrefix (SubscriberName,SubScriberPrefix)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;
