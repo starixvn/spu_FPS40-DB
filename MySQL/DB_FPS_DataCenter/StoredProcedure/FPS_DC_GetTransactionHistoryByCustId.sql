@@ -14,6 +14,7 @@ BEGIN
         
 		Param's Explanation (filtered by):
 			-	ip_historyRange: 1 - last 24 hours; 7 - last 7 days; 30 - last 30 days; 180 - last 180 days
+            -	DeviceStatus: 1 - New; 2 - Old; 3 - Recover
 	*/
     
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
