@@ -46,28 +46,28 @@ BEGIN
 	#=======================
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
 	# Insert Browser
-	INSERT IGNORE INTO FPSA_DataCenter.Browser(BrowserName, CreatedDate)
+	INSERT IGNORE INTO FPS_DataCenter.Browser(BrowserName, CreatedDate)
 	SELECT		tmpBr.BrowserName, Now() 
     FROM 		Temp_UserAgent AS tmpBr 
     GROUP BY 	tmpBr.BrowserName;
 
 	# Insert OS
-	INSERT IGNORE INTO FPSA_DataCenter.OS(OSName, CreatedDate)
+	INSERT IGNORE INTO FPS_DataCenter.OS(OSName, CreatedDate)
 	SELECT 		tmpOs.OSName, Now() 
 	FROM 		Temp_UserAgent AS tmpOs 
     GROUP BY 	tmpOs.OSName;
 
 	# Update Browser and OS Id into temporary table
 	UPDATE 		Temp_UserAgent as tmpAU 
-	INNER JOIN	FPSA_DataCenter.OS AS os
+	INNER JOIN	FPS_DataCenter.OS AS os
 				ON tmpAU.OSName = os.OSName
-	INNER JOIN	FPSA_DataCenter.Browser AS br 
+	INNER JOIN	FPS_DataCenter.Browser AS br 
 				ON tmpAU.BrowserName = br.BrowserName
 	SET  		tmpAU.BrowserID = br.BrowserID
 				, tmpAU.OSID = os.OSID;             
 
 	# Update Browser and OS into User Agent table
-	UPDATE 		FPSA_DataCenter.UserAgent AS us 
+	UPDATE 		FPS_DataCenter.UserAgent AS us 
 	INNER JOIN	Temp_UserAgent AS tmp 
 				ON us.UserAgentCode = tmp.UserAgentCode
 	SET 		us.BrowserID = tmp.BrowserID

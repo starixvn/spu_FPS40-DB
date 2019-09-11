@@ -8,10 +8,11 @@ Revisions:
 Reviewer: 
 */
 
-CREATE DATABASE IF NOT EXISTS FPSS_RawTransaction;
+CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 
 CREATE TABLE FPS_RawTransaction.RawTransaction(	
-	LoginName					VARCHAR(50)						NOT NULL
+	StagingTransID				BIGINT
+	, LoginName					VARCHAR(50)						NOT NULL
 	, SubscriberName			VARCHAR(50) 					NOT NULL
 	, TransDate					TIMESTAMP(4) 					NOT NULL
 	, CreatedDate				DATETIME						NOT NULL	COMMENT 'Date Only'
@@ -25,7 +26,6 @@ CREATE TABLE FPS_RawTransaction.RawTransaction(
 	, ActionResult				VARCHAR(100) 					NULL
     
     , IsProcessed		TINYINT							NOT NULL	DEFAULT '0'
-    , StagingTransID	BIGINT		AUTO_INCREMENT		NOT NULL	
 
 	, PRIMARY KEY PK_RawTransaction_StaingTransID(StagingTransID)
 	, INDEX IX_RawTransaction_IsProcessed(IsProcessed)

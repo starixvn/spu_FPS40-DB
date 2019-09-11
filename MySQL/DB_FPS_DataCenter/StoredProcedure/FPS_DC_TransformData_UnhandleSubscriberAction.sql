@@ -3,9 +3,9 @@ DELIMITER $$
 
 USE FPS_DataCenter$$
 
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_DataCenter_Process_UnhandleSubscriberAction$$
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_UnhandleSubscriberAction$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_DataCenter_Process_UnhandleSubscriberAction(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_UnhandleSubscriberAction(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
 BEGIN
 	
     /*
@@ -21,7 +21,7 @@ BEGIN
 	DECLARE	UnhandleStatus					TINYINT DEFAULT -1;
     
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_UnhandleSubscriberAction' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_UnhandleSubscriberAction' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);

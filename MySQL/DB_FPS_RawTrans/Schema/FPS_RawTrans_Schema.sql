@@ -9,8 +9,10 @@ Reviewer:
 
 CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 
+DROP TABLE IF EXISTS FPS_RawTransaction.RawTransaction;
 CREATE TABLE FPS_RawTransaction.RawTransaction (
-	LoginName					VARCHAR(50) 					 	NOT NULL	
+	StagingTransID			BIGINT								AUTO_INCREMENT
+	, LoginName					VARCHAR(50) 					 	NOT NULL	
 	, SubscriberName			VARCHAR(50) 						NOT NULL
 	, TransDate					TIMESTAMP(4)	 					NOT NULL
 	, CreatedDate				DATETIME	 						NOT NULL	COMMENT 'Date Only'
@@ -22,7 +24,7 @@ CREATE TABLE FPS_RawTransaction.RawTransaction (
 	, PluginID					BIGINT 								NULL	
 	, URL						VARCHAR(250) 						NULL
 	, ActionResult				VARCHAR(100) 						NULL
-
+	, PRIMARY KEY PK_RawTransaction_StaingTransID(StagingTransID)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 

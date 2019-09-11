@@ -29,8 +29,8 @@ BEGIN
     
     ### PERFORMANCE: END
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-	INSERT INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultCode, UserAgentCode, DeviceCode, FingerprintCode, FingerprintMoreInfo, LoginName 
-				,  TransDate, CreatedDate, IP, PluginID, Flagged, LoginNameWithPrefixID)                
+	INSERT IGNORE INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultCode, UserAgentCode, DeviceCode, FingerprintCode, FingerprintMoreInfo, LoginName 
+				,  TransDate, CreatedDate, IP, PluginID, Flagged, LoginNameWithPrefixID, DeviceID)                
 	SELECT 		rt.StagingTransID
 				, su.SubscriberID
 				, MD5(rt.URL)
@@ -46,6 +46,7 @@ BEGIN
 				, rt.PluginID
 				, 0 AS Flagged
                 , CRC32(LOWER(CONCAT(su.SubscriberPrefix, rt.LoginName))) AS LoginNameWithPrefixID
+                , (CASE WHEN DeviceCode = '' THEN -1 ELSE NULL END) AS DeviceID
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     INNER JOIN	FPS_Admin.Subscriber AS su
 				ON	rt.SubscriberName = su.SubscriberName

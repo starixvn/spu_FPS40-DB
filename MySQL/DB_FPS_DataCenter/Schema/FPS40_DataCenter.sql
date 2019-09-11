@@ -242,8 +242,8 @@ CREATE TABLE FPS_DataCenter.Device(
 # ========Exceptions===========================================
 	CREATE TABLE FPS_DataCenter.Exception(
 		ExceptionID		INT				AUTO_INCREMENT		NOT NULL		
-		, DeviceID		BIGINT								NOT NULL
-		, AccountID		BIGINT								NOT NULL
+		, FromAccountID	BIGINT								NOT NULL
+		, ToAccountID	BIGINT								NOT NULL
 		, SubscriberID	SMALLINT							NOT NULL
 		, Remark		VARCHAR(200)	CHARACTER SET UTF8MB4	NULL
 		, CreatedDate	DATETIME							NOT NULL
@@ -251,7 +251,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, IsActive		TINYINT						NOT NULL
         
         , PRIMARY KEY	PK_Exceptions_ExceptionID(ExceptionID)
-        , UNIQUE INDEX	UIX_Exceptions_AccountID_DeviceID(AccountID, DeviceID)
+        , UNIQUE INDEX	UIX_Exceptions_FromAccountID_ToAccountID(FromAccountID,ToAccountID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ========LogType===========================================
