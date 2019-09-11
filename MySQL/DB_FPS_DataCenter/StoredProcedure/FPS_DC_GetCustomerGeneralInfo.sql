@@ -15,7 +15,7 @@ BEGIN
 		Param's Explanation (filtered by):
 			- @AccountEvidenceStatus: 1 (clean), 2 (to be flagged), 0 (central point)
             
-		call FPS_DataCenter.FPS_DC_GetCustomerGeneralInfo(7180, 0, 16994226);
+		CALL FPS_DataCenter.FPS_DC_GetCustomerGeneralInfo(7180, 1, 8);
 	*/
     
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -40,14 +40,25 @@ BEGIN
     SET @LastLogin = CURRENT_TIMESTAMP();
     SET @LoginCount = 0;
     SET @AccountEvidenceStatus = 1;
+    SET @accountEviLevel = NULL;
     
-    IF EXISTS (SELECT 1 FROM FPS_DataCenter.TargetEvidence AS te WHERE te.TargetID = ip_accountId AND (te.IsCreatedByMaster = ip_isMaster OR te.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = ip_userId))) THEN
-		SET @AccountEvidenceStatus = 2;
-    END IF;
-    
-    IF EXISTS (SELECT 1 FROM FPS_DataCenter.TargetEvidence AS te WHERE te.CentralPointID = ip_accountId AND (te.IsCreatedByMaster = ip_isMaster OR te.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = ip_userId))) THEN
+    SET @accountEviLevel = (SELECT MIN(te.TargetLevel)
+	FROM FPS_DataCenter.TargetEvidence AS te
+	WHERE te.TargetID = ip_accountId
+		AND te.TargetType = 0
+		AND (ip_isMaster = 1
+				OR (te.IsCreatedByMaster = 0 
+					AND te.SubscriberID IN (SELECT SubscriberID
+											FROM FPS_Admin.UserSubscriber
+											WHERE UserID = ip_userId))));
+                                            
+    IF @accountEviLevel IS NULL THEN
+		SET @AccountEvidenceStatus = 1;
+	ELSEIF @accountEviLevel = 0 THEN
 		SET @AccountEvidenceStatus = 0;
-    END IF;
+	ELSE
+		SET @AccountEvidenceStatus = 2;
+	END IF;
     
     SELECT 	MAX(t.CreatedDate) INTO @LastLogin
     FROM FPS_DataCenter.Transaction AS t
