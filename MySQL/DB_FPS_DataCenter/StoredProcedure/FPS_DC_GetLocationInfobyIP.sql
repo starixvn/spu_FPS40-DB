@@ -2,7 +2,7 @@ DELIMITER $$
 USE FPS_DataCenter$$
 DROP PROCEDURE IF EXISTS FPS_DC_GetLocationInfobyIP$$
 
-CREATE PROCEDURE FPS_DC_GetLocationInfobyIP (IN ip_IPRangeLocationID BIGINT)
+CREATE PROCEDURE FPS_DC_GetLocationInfobyIP (IN ip_IP DECIMAL(50,0))
 BEGIN
 	/*
 		Created: 20190904@Long.Luu
@@ -22,7 +22,7 @@ BEGIN
         ,	ipr.City
         ,	ipr.ISPName
     FROM FPS_DataCenter.IPRangeLocation AS ipr
-    WHERE ipr.IPRangeLocationID = ip_IPRangeLocationID
+    WHERE ip_IP BETWEEN ipr.FromIP AND ipr.ToIP
 		AND ipr.Status = 1;
 	
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;

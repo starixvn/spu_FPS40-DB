@@ -28,7 +28,6 @@ BEGIN
     SELECT 	t.TransDate AS `TransDate`
 		,	t.DeviceCode AS `DeviceCode`
         ,	d.DeviceStatus AS `DeviceStatus`
-        ,	t.Flagged AS `RobotTracking`
         ,	ar.ActionResultKey AS `ActionResult` 
         ,	ua.OS AS `DeviceType` 	
         ,	ua.Browser AS `Browser`
@@ -41,7 +40,8 @@ BEGIN
         INNER JOIN FPS_DataCenter.Device AS d ON t.DeviceID = d.DeviceID
         INNER JOIN FPS_DataCenter.UserAgent AS ua ON ua.UserAgentID = t.UserAgentID
 	WHERE t.AccountID = ip_accountId
-		AND t.TransDate > @rptStartDate AND t.TransDate < @rptEndDate;
+		AND t.TransDate > @rptStartDate AND t.TransDate < @rptEndDate
+	ORDER BY t.TransDate DESC;
 
 	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
