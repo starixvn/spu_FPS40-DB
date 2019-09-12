@@ -50,9 +50,10 @@ BEGIN
 		,	tsl.SubscriberName
         ,	acc.Username
         ,	acc.Username2
+        ,	acc.FirstLoginName
     FROM 	FPS_DataCenter.Account AS acc
 		INNER JOIN tmp_SubscriberList AS tsl ON acc.SubscriberID = tsl.SubscriberID
-    WHERE	(acc.Username LIKE CONCAT('%', ip_Username, '%') OR acc.Username2 LIKE CONCAT('%', ip_Username, '%'))
+    WHERE	(acc.Username LIKE CONCAT('%', ip_Username, '%') OR acc.Username2 LIKE CONCAT('%', ip_Username, '%') OR acc.FirstLoginName LIKE CONCAT('%', ip_Username, '%'))
     ORDER BY acc.Username;	  
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    

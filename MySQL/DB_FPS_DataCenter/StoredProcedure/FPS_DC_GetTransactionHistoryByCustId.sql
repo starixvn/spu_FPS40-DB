@@ -27,8 +27,8 @@ BEGIN
     END IF;
     
     SELECT 	t.TransDate AS `TransDate`
-		,	t.DeviceCode AS `DeviceCode`
-        ,	d.DeviceStatus AS `DeviceStatus`
+		,	t.FirstDeviceCode AS `DeviceCode`
+        ,	t.DeviceStatus AS `DeviceStatus`
         ,	ar.ActionResultKey AS `ActionResult` 
         ,	ua.OS AS `DeviceType` 	
         ,	ua.Browser AS `Browser`
@@ -37,7 +37,6 @@ BEGIN
 	FROM FPS_DataCenter.Transaction AS t
 		INNER JOIN FPS_DataCenter.ActionResult AS ar ON t.ActionResultID = ar.ActionResultID
         INNER JOIN FPS_DataCenter.SubscriberURL AS url ON t.SubURLID = url.SubscriberURLID
-        INNER JOIN FPS_DataCenter.Device AS d ON t.DeviceID = d.DeviceID
         INNER JOIN FPS_DataCenter.UserAgent AS ua ON ua.UserAgentID = t.UserAgentID
 	WHERE t.AccountID = ip_accountId
 		AND t.TransDate > @rptStartDate AND t.TransDate < @rptEndDate
