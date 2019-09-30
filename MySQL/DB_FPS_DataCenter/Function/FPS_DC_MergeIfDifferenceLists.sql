@@ -1,3 +1,9 @@
+DELIMITER $$
+USE `FPS_DataCenter`$$
+DROP FUNCTION IF EXISTS FPS_DC_MergeIfDifferenceLists$$
+CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 VARCHAR(5000), ip_List02 VARCHAR(5000)) RETURNS VARCHAR(5000)
+    DETERMINISTIC
+BEGIN
 /*
 	Created: 20190610@Casey.Huynh
 	Task : Merge List A and List B. Return Merge List if A difference B else return NULL
@@ -7,12 +13,7 @@
 	Revisions:
 	Param's Explanation (filtered by):
 */
-DELIMITER $$
-USE `FPS_DataCenter`$$
-DROP FUNCTION IF EXISTS FPS_DC_MergeIfDifferenceLists$$
-CREATE DEFINER=`fps`@`%` FUNCTION `FPS_DC_MergeIfDifferenceLists`(ip_seperator VARCHAR(5), ip_List01 VARCHAR(5000), ip_List02 VARCHAR(5000)) RETURNS VARCHAR(5000)
-    DETERMINISTIC
-BEGIN
+
 	DECLARE i 		INT;
 	DECLARE str 	VARCHAR(5000);
 	DECLARE result 	VARCHAR(5000) DEFAULT NULL;

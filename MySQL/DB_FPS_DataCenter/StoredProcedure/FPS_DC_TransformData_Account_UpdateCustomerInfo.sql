@@ -2,9 +2,9 @@ DELIMITER $$
 
 USE FPS_DataCenter$$
 
-DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Account_GetForUpdateCustInfo$$
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Account_UpdateCustomerInfo$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_GetForUpdateCustInfo (IN custDataXml LONGTEXT, OUT op_ErrorCode TINYINT, OUT op_ErrorMessage VARCHAR(500))
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_UpdateCustomerInfo (IN custDataXml LONGTEXT, OUT op_ErrorCode TINYINT, OUT op_ErrorMessage VARCHAR(500))
 BEGIN
 /*
 	Created: 20190620@Harvey
@@ -18,6 +18,24 @@ BEGIN
 	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
 	DECLARE RowCount INT UNSIGNED;
 	DECLARE XpathRow VARCHAR(255);
+    
+    ### PERFORMANCE: START
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_UpdateCustomerInfo' ;
+    DECLARE		GroupID 	INT;
+    DECLARE 	Notes	 	VARCHAR(500);
+	DECLARE 	StartTime	TIMESTAMP(4);
+	DECLARE		EndTime 	TIMESTAMP(4);
+	DECLARE		Duration 	BIGINT ;
+    DECLARE		NoOfAccount	INT;
+    ### PERFORMANCE: END
+	
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
+    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
+    SET 	StartTime = CURRENT_TIMESTAMP(4);
+    ### PERFORMANCE: END
+	
     
     #=======================
     DROP TABLE IF EXISTS Temp_Account;
@@ -78,7 +96,16 @@ BEGIN
 		,acc.RoleID = tempAcc.RoleID
 		,acc.CurrencyID = tempAcc.CurrencyID
 		,acc.CurrencyName = tempAcc.CurrencyName;
-
+	
+    ### PERFORMANCE
+	
+    SET EndTime = CURRENT_TIMESTAMP(4);
+	
+    SET NoOfAccount = (SELECT Count(1) FROM Temp_Account);
+    SET Notes = CONCAT('NoOfAccount: ', NoOfAccount );	
+    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
+    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
+	### PERFORMANCE 
 END$$
 
 DELIMITER ;

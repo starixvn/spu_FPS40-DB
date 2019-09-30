@@ -1,12 +1,3 @@
-/*
-	Created: 20190610@Casey.Huynh
-	Task : Check 2 Lists are match if have any the same item. Return 1 if match else return 0
-	DB: FPS_DataCenter
-	Original:
-
-	Revisions:
-	Param's Explanation (filtered by):
-*/
 
 DELIMITER $$
 
@@ -19,26 +10,37 @@ RETURNS TINYINT
 DETERMINISTIC
 
 BEGIN
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Check 2 Lists are match if have any the same item. Return 1 if match else return 0
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 	DECLARE i 		INT;
 	DECLARE str 	VARCHAR(5000);
 	DECLARE result 	TINYINT DEFAULT 0;
-
+    
+    
 	IF(ip_List01 = '' OR ISNULL(ip_List01)= 1 OR ip_List02 = '' OR ISNULL(ip_List02)= 1 ) THEN
 		
 		Return result;
 		
 	END IF;
-	DROP TEMPORARY TABLE IF EXISTS temp_Table01;
-	DROP TEMPORARY TABLE IF EXISTS temp_Table02;
+	DROP TEMPORARY TABLE IF EXISTS temp_MatchList01;
+	DROP TEMPORARY TABLE IF EXISTS temp_MatchList02;
 	
-	CREATE TEMPORARY TABLE temp_Table01(
+	CREATE TEMPORARY TABLE temp_MatchList01(
 		item VARCHAR(5000)
-	);
+	)ENGINE=MEMORY;
 	#----------------------------------------
 
-	CREATE TEMPORARY TABLE temp_Table02(
+	CREATE TEMPORARY TABLE temp_MatchList02(
 		item VARCHAR(5000)
-	);
+	)ENGINE=MEMORY;
  #------------------------------------------
  
 	SET i = 0;
@@ -55,7 +57,7 @@ BEGIN
 
 		#Do Inserts into temp table here with str going into the row
 	
-		INSERT INTO temp_Table01 VALUES (str);
+		INSERT INTO temp_MatchList01 VALUES (str);
  
 	END LOOP SIMPLE_LOOP;
  
@@ -75,19 +77,21 @@ BEGIN
 
 		#Do Inserts into temp table here with str going into the row
 		
-		INSERT INTO temp_Table02 VALUES (str);
+		INSERT INTO temp_MatchList02 VALUES (str);
  
 	END LOOP SIMPLE_LOOP;
     
 	SET result = (SELECT COUNT(1)
 					FROM (	SELECT 1
-							FROM	temp_Table01 t1
-							INNER JOIN	temp_Table02 t2
+							FROM	temp_MatchList01 t1
+							INNER JOIN	temp_MatchList02 t2
 										ON t1.Item = t2.Item
 							LIMIT 1) AS temp_Result);
 
 	RETURN result;
-
+	
+    DROP TEMPORARY TABLE IF EXISTS temp_MatchList01;
+	DROP TEMPORARY TABLE IF EXISTS temp_MatchList02;
 END$$
 
 DELIMITER ;

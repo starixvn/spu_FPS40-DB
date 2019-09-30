@@ -18,13 +18,17 @@ BEGIN
 
     ####
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_Account_Insert' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_Insert' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	BIGINT ;
-    
+    ### PERFORMANCE: END
+	
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
     SET 	StartTime = CURRENT_TIMESTAMP(4);
     ### PERFORMANCE: END
@@ -78,8 +82,8 @@ BEGIN
 				 )
 			   ) AS  tmpAcc;
                
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-	INSERT INTO FPS_DataCenter.Account
+   
+	INSERT IGNORE INTO FPS_DataCenter.Account
 		(
 		SubscriberID
         , IsDeposit
@@ -93,7 +97,8 @@ BEGIN
 		, CurrencyName
         , FirstLoginNameID
         , UsernameID
-		, Username2ID	
+		, Username2ID
+        , InsertTime
 		)
 	SELECT    
 		tac.SubscriberID
@@ -108,13 +113,14 @@ BEGIN
 		, tac.CurrencyName
         , CRC32(LOWER(tac.LoginNameWithPrefix)) AS FirstLoginNameID
         , CRC32(LOWER(tac.Username)) AS UsernameID
-		, CRC32(LOWER(tac.Username2)) AS Username2ID	
+		, CRC32(LOWER(tac.Username2)) AS Username2ID
+        , CURRENT_TIMESTAMP(4) 		AS InsertTime
 	FROM		Temp_Account AS tac
 	LEFT JOIN	FPS_DataCenter.Account AS acc USE INDEX (IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID)
 				ON CRC32(LOWER(tac.LoginNameWithPrefix)) IN (acc.FirstLoginNameID, acc.UsernameID, acc.Username2ID)
-	WHERE	acc.AccountID IS NULL;	
+	WHERE	acc.AccountID IS NULL;
 
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    
 	### PERFORMANCE
     SET EndTime = CURRENT_TIMESTAMP(4);
 	
@@ -126,6 +132,6 @@ BEGIN
     #============================================
 	DROP TEMPORARY TABLE IF EXISTS Temp_Account;
     #==============================================
-	
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 DELIMITER ;

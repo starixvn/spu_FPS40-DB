@@ -22,14 +22,17 @@ BEGIN
 	### PERFORMANCE: START
 	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_GetFromRawTransaction' ;
     DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	VARCHAR(500) DEFAULT 'Start Get MinMax';
+    DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	INT ;
-    
+	DECLARE		Duration 	BIGINT ;
+    ### PERFORMANCE: END
+	
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
     SET 	StartTime = CURRENT_TIMESTAMP(4);
-    
     ### PERFORMANCE: END
 
     
@@ -45,9 +48,7 @@ BEGIN
         , LoginName			VARCHAR(50)	
         , CreatedDate		DATETIME
         , LoginNameWithPrefixID	BIGINT
-    );   
-    
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    );	
  
     INSERT INTO Temp_Account (SubscriberID, SubscriberName, SubscriberPrefix, IsDeposit, URL, LoginName, CreatedDate, LoginNameWithPrefixID)
     SELECT 		su.SubscriberID
@@ -90,9 +91,7 @@ BEGIN
 				ON  ta.SubscriberID = ac.SubscriberID
 					AND ta.LoginNameWithPrefixID IN (ac.FirstLoginNameID, ac.UsernameID, ac.Username2ID)
 	WHERE		ac.AccountID IS NULL
-	GROUP BY	ta.LoginName, ta.SubscriberPrefix, ta.SubscriberName, ta.SubscriberID, ta.IsDeposit;	
-    
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	GROUP BY	ta.LoginName, ta.SubscriberPrefix, ta.SubscriberName, ta.SubscriberID, ta.IsDeposit;	 
     
     ### PERFORMANCE
     SET EndTime = CURRENT_TIMESTAMP(4);
@@ -105,6 +104,7 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS Temp_Account;
     #==============================================
 	
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	### PERFORMANCE 
 END$$
 DELIMITER ;

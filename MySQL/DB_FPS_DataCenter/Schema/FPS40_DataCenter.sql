@@ -9,151 +9,161 @@ Reviewer:
 
 CREATE DATABASE IF NOT EXISTS FPS_DataCenter;
 CREATE TABLE FPS_DataCenter.Device(
-		DeviceID				BIGINT 			AUTO_INCREMENT
+		DeviceID				BIGINT 			NOT NULL
 		, FirstDeviceCode		VARCHAR(32)		NULL
-		, LastDeviceCode		VARCHAR(32) 	NULL
-        , FingerprintCode		VARCHAR(640) 	NULL
-        , FingerprintMoreInfo	TEXT			NULL
-        , StagingTransID		BIGINT			NULL
-        , UserAgentID			INT				NULL
-        , PluginID				INT				NULL
-        , FirstAccountID		BIGINT			NULL
+        , UserAgentID			BIGINT			NULL
+        , FirstStagingTransID	BIGINT			NULL
         , CreatedDate			DATETIME		NULL
         , DeviceStatus			TINYINT			NULL
+        , InsertTime			TIMESTAMP(4)	NULL
         
         , PRIMARY KEY	PK_Device_DeviceID(DeviceID)
         , INDEX			IX_Device_CreatedDate(CreatedDate)
+        , UNIQUE KEY	UK_Device_FirstDeviceCode(FirstDeviceCode)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ======Device=============================================
 	CREATE TABLE FPS_DataCenter.DeviceCode(
-		 
-		DeviceCode		VARCHAR(32) 		NOT NULL
-        , DeviceID			BIGINT
-		, CreatedDate		DATETIME		NOT NULL
+		DeviceCodeID			BIGINT			NOT NULL
+		, DeviceCode			VARCHAR(32) 	NOT NULL
+        , DeviceID				BIGINT			NULL
+        , CreatedDate			DATETIME		NULL
+        , FirstDeviceCode		VARCHAR(32)		NULL				COMMENT 'DeviceCode Of Device. Defferent with DeviceCode Field'
+        , LastStatus			TINYINT			NULL
+		, FirstStagingTransID	BIGINT			NULL
+        , FirstStatus			TINYINT			NULL
+        , InsertTime			TIMESTAMP(4)	NULL
         
-        , PRIMARY KEY	PK_DeviceCode_DeviceCode(DeviceCode)
+        , PRIMARY KEY	PK_DeviceCode_DeviceCode(DeviceCodeID)
         , INDEX			IX_DeviceCode_CreatedDate(CreatedDate)
-        , INDEX			IX_DeviceCode_DeviceID(DeviceID)
+        , INDEX			IX_DeviceCode_DeviceID(DeviceID, DeviceCodeID)
         
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
      
 # ======DeviceDetail=============================================
 	CREATE TABLE FPS_DataCenter.DeviceFingerprint(
-		DeviceFingerprintID		BIGINT 			AUTO_INCREMENT
-        , DeviceID				VARCHAR(32) 	NOT NULL
-        , FingerprintCode		VARCHAR(320)
-		, FingerprintMoreInfo	TEXT
-        , UserAgentID			INT				NULL
+		FingerprintID			BIGINT 			UNSIGNED NOT NULL
+        , FingerprintCode		VARCHAR(620)	NOT NULL
+		, FingerprintMoreInfo	TEXT			NULL
+        , UserAgentID			BIGINT			NULL
 		, PluginID				BIGINT			NULL
-        , CreatedDate			DATETIME
+        , DeviceID				BIGINT			NULL
+        , CreatedDate			DATETIME		NULL
+        , InsertTime			TIMESTAMP(4)	NULL
         
-        , PRIMARY KEY	PK_DeviceFingerprint_DeviceFingerprintID(DeviceFingerprintID)        
-        , INDEX			IX_DeviceFingerprint_DeviceCode(DeviceID)
+        , PRIMARY KEY	PK_Fingerprint_FingerprintID(FingerprintID)
+        , INDEX			IX_Fingerprint_FingerprintCode(DeviceID, FingerprintCode)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
     
 # =======Association============================================
 	CREATE TABLE FPS_DataCenter.Association(
-		AssociationID		BIGINT 		AUTO_INCREMENT
+		AssociationID		BIGINT 		NOT NULL
 		, DeviceID			BIGINT		NOT NULL
 		, AccountID			BIGINT		NOT NULL
 		, SubscriberID		SMALLINT	NOT NULL
 		, CreatedDate		DATETIME	NOT NULL
 		, SyncGraphDB		TINYINT		NOT NULL	COMMENT '0: NOT SENT TO GraphDB, 1: SENT'
+        , InsertTime		TIMESTAMP(4)	NULL
         
         , PRIMARY KEY	PK_Association_AssociationID(AssociationID)
         , INDEX	IX_Association_SubscriberID_AccountID(SubscriberID, AccountID)
         , INDEX IX_Association_SubscriberID_DeviceID(SubscriberID, DeviceID)
         , INDEX IX_Association_SyncGraphDB(SyncGraphDB)
-        
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Account============================================
 	CREATE TABLE FPS_DataCenter.`Account`(
-		AccountID			BIGINT			AUTO_INCREMENT		NOT NULL
+		AccountID			BIGINT		UNSIGNED	AUTO_INCREMENT	NOT NULL
+        , FirstLoginName	VARCHAR(50)							NOT NULL
         , SubscriberID		SMALLINT							NOT NULL
         , IsDeposit			TINYINT								NULL
-        , FirstLoginName	VARCHAR(50)							NOT NULL
-		, CustID			BIGINT								NULL
+        , CustID			BIGINT								NULL
 		, Username			VARCHAR(50)							NULL
 		, Username2			VARCHAR(50)							NULL
 		, RoleID			TINYINT								NULL
 		, CurrencyID		SMALLINT							NULL
 		, CurrencyName		VARCHAR(50)							NULL				
-		, CreatedDate		DATETIME							NOT NULL
+		, CreatedDate		DATETIME							NULL
         , LastArchivedDate	DATETIME							NULL
         , FirstLoginNameID	BIGINT								NULL			
         , UserNameID		BIGINT								NULL
         , UserName2ID		BIGINT								NULL
+        , InsertTime		TIMESTAMP(4)						NULL
         
         , PRIMARY KEY	PK_Account_AccountID(AccountID)        
         , INDEX			IX_Account_CustID(CustID)
         , INDEX			IX_Account_SubscriberID_Username(SubscriberID, Username)
         , INDEX			IX_Account_SubscriberID_Username2(SubscriberID, Username2)
         , INDEX			IX_Account_SubscriberID_FirstLoginNameID_UserNameID_Username2ID(SubscriberID, FirstLoginNameID, UserNameID, UserName2ID)
+        , UNIQUE KEY	UK_Account_FirstLoginNameID_UserNameID_Username2ID(FirstLoginNameID, UserNameID, UserName2ID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # =======Transactions============================================
-	CREATE TABLE FPS_DataCenter.`Transaction`(
-		TransID				BIGINT			AUTO_INCREMENT		NOT NULL
-        , DeviceID			BIGINT								NULL
+	CREATE TABLE FPS_DataCenter.`Transaction`(  
+		StagingTransID		BIGINT	UNSIGNED					NOT NULL
+		, LoginName			VARCHAR(50)							NOT NULL
+        , TransDate			TIMESTAMP(4)						NOT	NULL
+        , CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL        
+        , SubscriberID		SMALLINT							NULL
+        , SubURLID			VARCHAR(32)							NULL
+        , AccountID			BIGINT								NULL        
         , DeviceCode		VARCHAR(32)							NULL
-		, FingerprintCode	VARCHAR(640)						NULL
-        , FingerprintMoreInfo	TEXT							NULL
-		, LoginName			VARCHAR(50)							NOT NULL	
-		, AccountID			BIGINT								NULL
-		, SubscriberID		SMALLINT							NULL
-		, TransDate			TIMESTAMP(4)						NOT	NULL
-		, CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL
-		, IP				VARCHAR(50)							NULL
-		, PluginID			BIGINT								NULL
-		, Flagged			SMALLINT							NULL		COMMENT 'captcha & browserless'
-		, SubURLID			VARCHAR(32)							NULL
-		, ActionResultCode	VARCHAR(32)							NULL
-		, UserAgentCode		VARCHAR(32)							NULL        
-        , StagingTransID	BIGINT			UNIQUE				NOT NULL
-        , LoginNameWithPrefixID BIGINT							NULL
+		, DeviceCodeID		BIGINT								NULL
+        , DeviceID			BIGINT			UNSIGNED			NULL		COMMENT 'Current Device Status'
+        , FirstDeviceCode	VARCHAR(32)							NULL
+        , DeviceStatus		TINYINT								NULL
+        , FingerprintCodeID	BIGINT			UNSIGNED			NULL
+        , UserAgentID		BIGINT								NULL
+        , IP				VARCHAR(50)							NULL
+        , ActionResultID 	BIGINT								NULL
+		, Flagged			SMALLINT							NULL		COMMENT 'captcha & browserless'		
+        , PluginID					BIGINT 						NULL
+		, LoginNameWithPrefixID BIGINT							NULL
+        , TransStatus		INT									NULL
+        , InsertTime		TIMESTAMP(4)						NULL
         
-        , PRIMARY KEY	PK_Transaction_TransID(TransID)        
-        , INDEX			IX_Transaction_DeviceID(DeviceID)
+        , PRIMARY KEY	PK_Transaction_StagingTransID(StagingTransID)     
+        , INDEX			IX_Transaction_DeviceID(DeviceCode)
         , INDEX			IX_Transaction_SubscriberIDAccountID(SubscriberID,AccountID)
         , INDEX			IX_Transaction_CreatedDate(CreatedDate)
 	 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.OS(
-		OSID			SMALLINT		AUTO_INCREMENT			NOT NULL
-		, OSName		VARCHAR(100)								NULL
-        , CreatedDate	DATETIME									NOT NULL
+		OSID			SMALLINT		AUTO_INCREMENT	NOT NULL
+		, OSName		VARCHAR(100)					NOT NULL
+        , CreatedDate	DATETIME						NOT NULL
         
         , PRIMARY KEY 	PK_OS_ISID(OSID)
+        , UNIQUE KEY	UK_OSName(OSName)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.Browser(
 		BrowserID			SMALLINT		AUTO_INCREMENT	NOT NULL
-		, BrowserName		VARCHAR(100)						NOT NULL
-        , CreatedDate		DATETIME							NOT NULL
+		, BrowserName		VARCHAR(100)					NOT NULL
+        , CreatedDate		DATETIME						NOT NULL
         
         , PRIMARY KEY 	PK_Browser_BrowserID(BrowserID)
+        , UNIQUE KEY	UK_BrowserName(BrowserName)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	CREATE TABLE FPS_DataCenter.ActionResult(
-		ActionResultCode		VARCHAR(32)		
-		, ActionResult			VARCHAR(100)	NOT NULL
-        , ActionStatus			TINYINT			NOT NULL	COMMENT '0: Inactive; 1: Active; 2: Unhandled(Action has not defined in Intergrated Action List)'
+		ActionResultID			BIGINT		
+		, ActionResultKey		VARCHAR(200)	NOT NULL
+        , ActionStatus			TINYINT			NOT NULL	COMMENT '0: Inactive; 1: Active; -1: Unhandled(Action has not defined in Intergrated Action List)'
         , CreatedDate			DATETIME		NOT NULL	COMMENT 'Date Only'
         
-        , PRIMARY KEY 	PK_ActionResult_ActionResultCode(ActionResultCode)
+        , PRIMARY KEY 	PK_ActionResult_ActionResultID(ActionResultID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ===========================================================================
 	
     CREATE TABLE FPS_DataCenter.SubscriberURL(
-		SubscriberURLID			SMALLINT		AUTO_INCREMENT	NOT NULL
+		SubscriberURLID			BIGINT							NOT NULL
 		, URL					VARCHAR(250)					NULL
         , SubscriberID			SMALLINT						NULL
-        , CreatedDate			DATETIME						NOT NULL
+        , CreatedDate			DATETIME						NULL
         
         , PRIMARY KEY 	PK_SubscriberURL_SubscriberURLID(SubscriberURLID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
@@ -169,7 +179,7 @@ CREATE TABLE FPS_DataCenter.Device(
         , Region				VARCHAR(128)					NULL
         , City					VARCHAR(100)					NULL
         , ISPName				VARCHAR(256)					NULL
-        , Status				TINYINT        				COMMENT '0: Inactive; 1: Active'
+        , Status				TINYINT        					NULL COMMENT '0: Inactive; 1: Active'
         , CreatedDate			DATETIME
         
         , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeLocationID)
@@ -179,14 +189,15 @@ CREATE TABLE FPS_DataCenter.Device(
 
 # =======UserAgent============================================
 	CREATE TABLE FPS_DataCenter.UserAgent(
-		UserAgentCode	VARCHAR(32)						NOT NULL
-		, UserAgent		TEXT							NOT NULL		
+		UserAgentID		BIGINT							NOT NULL
+		, UserAgent		TEXT							NOT NULL	
         , BrowserID		SMALLINT						NULL
         , OSID			SMALLINT						NULL
         , OS			VARCHAR(100)					NULL
         , Browser		VARCHAR(100)					NULL
+        , CreatedDate	DATETIME						NULL
         
-        , PRIMARY KEY	PK_UserAgent_UserAgentCode(UserAgentCode)
+        , UNIQUE KEY	UK_UserAgent_UserAgentID(UserAgentID)
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 # ======EvidenceGroup=============================================
@@ -284,6 +295,12 @@ CREATE TABLE FPS_DataCenter.IPTableLog(
 	, INDEX IX_IPTableLog_IPType_Flag (IsNewUpdate)
 );
 # ===================================================
+CREATE TABLE FPS_DataCenter.InvalidTrans(
+	InvalidTransID		BIGINT
+	, InvalidStatus		INT								COMMENT '1: Invalid Action Result, 10: Invalid Device, 11: Both'
+    , InvalidInfo		TEXT
+    , ProcessStatus		TINYINT
+);
 
 
 # ===================================================

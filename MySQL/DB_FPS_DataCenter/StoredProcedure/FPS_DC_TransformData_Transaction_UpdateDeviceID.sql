@@ -16,17 +16,20 @@ BEGIN
 	Param's Explanation (filtered by):
 	*/
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_UpdateAccountID' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Transaction_UpdateDeviceID' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	INT ;
-    
+    ### PERFORMANCE: END
+	
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
     SET 	StartTime = CURRENT_TIMESTAMP(4);
-    
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+    ### PERFORMANCE: END
     
 	DROP TEMPORARY TABLE IF EXISTS temp_Transaction;    
 	CREATE TEMPORARY TABLE temp_Transaction (

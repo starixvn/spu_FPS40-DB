@@ -27,13 +27,13 @@ BEGIN
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	BIGINT ;    
-    
+   ### PERFORMANCE: END
+	
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
     SET 	StartTime = CURRENT_TIMESTAMP(4);
-    
-	#INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    #Values(SPName, GroupID, 0, 'Start',StartTime);
-    
     ### PERFORMANCE: END
 	
     DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
@@ -74,9 +74,9 @@ BEGIN
                 , rt.CreatedDate
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     LEFT JOIN	FPS_DataCenter.ActionResult AS ac
-				ON ac.ActionResultCode = MD5(rt.ActionResult)
+				ON ac.ActionResultID =  CRC32(MD5(LOWER(rt.ActionResult))) 
 	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
-				AND ac.ActionResultCode IS NULL
+				AND ac.ActionResultID IS NULL
 				AND rt.Isprocessed = 0; 
 
     #==UNHANDLE SUBSCRIBER================================================================
@@ -95,14 +95,27 @@ BEGIN
 
     #==UNHANDLE ACTION================================================================
 
-	INSERT INTO FPS_DataCenter.ActionResult (ActionResultCode, ActionResult, CreatedDate, ActionStatus)
-	SELECT 		MD5(ts.ActionResult)
+	INSERT IGNORE INTO FPS_DataCenter.ActionResult (ActionResultID, ActionResultKey, CreatedDate, ActionStatus)
+	SELECT 		 CRC32(MD5(LOWER(ts.ActionResult))) AS ActionResultID
 				, ts.ActionResult
 				, MIN(ts.CreatedDate)	AS CreatedDate
 				, UnhandleStatus		AS ActionStatus # UnhandleStatus
     FROM		Temp_UnhandleAction AS ts
     GROUP BY	ts.ActionResult;
-        
+	
+    #===INSERT SUBCRIBERURL    
+    INSERT IGNORE INTO FPS_DataCenter.SubscriberURL(SubscriberURLID, URL, SubscriberID, CreatedDate)
+    SELECT		CRC32(MD5(LOWER(rt.URL))) AS SubscriberURLID
+				, rt.URL
+                , su.SubscriberID
+                , MIN(rt.CreatedDate)
+	FROM		FPS_RawTransaction.RawTransaction AS rt
+    LEFT JOIN	FPS_Admin.Subscriber AS su
+				ON rt.SubscriberName = su.SubscriberName
+	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
+				AND rt.IsProcessed = 0
+	GROUP BY	su.SubscriberID, rt.URL;
+    
 	### PERFORMANCE
     SET EndTime = CURRENT_TIMESTAMP(4);
    

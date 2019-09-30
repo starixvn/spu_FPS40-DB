@@ -1,12 +1,3 @@
-/*
-	Created: 20190610@Casey.Huynh
-	Task : Merge List A and List B. 
-	DB: FPS_DataCenter
-	Original:
-
-	Revisions:
-	Param's Explanation (filtered by):
-*/
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
@@ -21,19 +12,30 @@ RETURNS VARCHAR(5000)
 DETERMINISTIC
 
 BEGIN
+
+/*
+	Created: 20190610@Casey.Huynh
+	Task : Merge List A and List B. 
+	DB: FPS_DataCenter
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+*/
+
 	DECLARE i 		INT;
 	DECLARE str 	VARCHAR(5000);
 	DECLARE result 	VARCHAR(5000);
 	
-    DROP TEMPORARY TABLE IF EXISTS temp_Table01;
-	DROP TEMPORARY TABLE IF EXISTS temp_Table02;
+    DROP TEMPORARY TABLE IF EXISTS Temp_MergeList01;
+	DROP TEMPORARY TABLE IF EXISTS Temp_MergeList02;
 	
-	CREATE TEMPORARY TABLE temp_Table01(
+	CREATE TEMPORARY TABLE Temp_MergeList01(
 		item VARCHAR(500)
 	);
 	#----------------------------------------
 
-	CREATE TEMPORARY TABLE temp_Table02(
+	CREATE TEMPORARY TABLE Temp_MergeList02(
 		item VARCHAR(5000)
 	);
  #------------------------------------------
@@ -57,7 +59,7 @@ BEGIN
 
 		#Do Inserts into temp table here with str going into the row
 	
-		INSERT INTO temp_Table01 VALUES (str);
+		INSERT INTO Temp_MergeList01 VALUES (str);
  
 	END LOOP SIMPLE_LOOP;
  
@@ -80,16 +82,16 @@ BEGIN
 
 		#Do Inserts into temp table here with str going into the row
 		
-		INSERT INTO temp_Table02 VALUES (str);
+		INSERT INTO Temp_MergeList02 VALUES (str);
  
 	END LOOP SIMPLE_LOOP;
     
 	SET result = REPLACE((	SELECT GROUP_CONCAT(t.Item ) AS Item
 					FROM (SELECT 	t1.Item AS Item
-							FROM	temp_Table01 t1
+							FROM	Temp_MergeList01 t1
                             UNION DISTINCT
                             SELECT	t2.Item
-                            FROM	temp_Table02 t2
+                            FROM	Temp_MergeList02 t2
                             ) AS t
 					), ',',ip_seperator);
 	RETURN result;

@@ -17,28 +17,31 @@ BEGIN
 */
 
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_DataCenter_Process_Transaction' ;
+	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Transaction_Insert' ;
     DECLARE		GroupID 	INT;
     DECLARE 	Notes	 	VARCHAR(500);
 	DECLARE 	StartTime	TIMESTAMP(4);
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	INT ;
+    ### PERFORMANCE: END
     
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
     SET 	StartTime = CURRENT_TIMESTAMP(4);
-    
     ### PERFORMANCE: END
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-	INSERT IGNORE INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultCode, UserAgentCode, DeviceCode, FingerprintCode, FingerprintMoreInfo, LoginName 
-				,  TransDate, CreatedDate, IP, PluginID, Flagged, LoginNameWithPrefixID, DeviceID)                
+    
+	INSERT IGNORE  INTO FPS_DataCenter.Transaction(StagingTransID, SubscriberID, SubURLID, ActionResultID, UserAgentID, FingerprintCodeID, DeviceCode, DeviceCodeID, LoginName 
+				,  TransDate, CreatedDate, IP, PluginID, Flagged, LoginNameWithPrefixID, TransStatus, InsertTime)                
 	SELECT 		rt.StagingTransID
 				, su.SubscriberID
-				, MD5(rt.URL)
-                , MD5(rt.ActionResult)
-				, MD5(rt.UserAgent)
+				, CRC32(MD5(LOWER(rt.URL))) AS SubURLID
+                , CRC32(MD5(LOWER(rt.ActionResult))) ActionResultID
+				, CRC32(MD5(LOWER(rt.UserAgent))) AS UserAgentID
+                , CRC32(MD5(rt.FingerprintCode)) AS FingerprintCodeID
                 , rt.DeviceCode
-                , rt.FingerprintCode
-                , rt.FingerprintMoreInfo
+                , CRC32(MD5(rt.DeviceCode)) AS DeviceCodeID
 				, rt.LoginName				            
 				, rt.TransDate
 				, rt.CreatedDate
@@ -46,7 +49,8 @@ BEGIN
 				, rt.PluginID
 				, 0 AS Flagged
                 , CRC32(LOWER(CONCAT(su.SubscriberPrefix, rt.LoginName))) AS LoginNameWithPrefixID
-                , (CASE WHEN DeviceCode = '' THEN -1 ELSE NULL END) AS DeviceID
+                , rt.TransStatus
+                , CURRENT_TIMESTAMP(4) 		AS InsertTime
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     INNER JOIN	FPS_Admin.Subscriber AS su
 				ON	rt.SubscriberName = su.SubscriberName

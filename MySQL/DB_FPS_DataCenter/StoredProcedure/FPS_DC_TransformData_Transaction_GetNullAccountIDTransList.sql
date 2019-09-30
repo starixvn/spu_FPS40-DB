@@ -25,25 +25,29 @@ BEGIN
 	DECLARE		EndTime 	TIMESTAMP(4);
 	DECLARE		Duration 	int ;
     
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	
+    ### PERFORMANCE: START
     SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = Current_TimeStamp(4);
-    
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+    SET 	StartTime = CURRENT_TIMESTAMP(4);
+    ### PERFORMANCE: END
     
 	SELECT		ts.StagingTransID
     FROM		FPS_DataCenter.Transaction AS ts
     WHERE		ts.AccountID IS NULL
-    LIMIT		ip_Size;
+    LIMIT		ip_Size;  
    
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	
-    	### PERFORMANCE
+	### PERFORMANCE
     SET EndTime = CURRENT_TIMESTAMP(4);  
+    
+    SET Notes = CONCAT('Size: ', ip_Size);
     
     INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
     VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
 	### PERFORMANCE 
-
+    
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
     
 
     
