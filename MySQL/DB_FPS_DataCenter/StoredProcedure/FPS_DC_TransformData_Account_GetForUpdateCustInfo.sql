@@ -16,47 +16,55 @@ BEGIN
 		Param's Explanation (filtered by):
 	*/
 			
-		### PERFORMANCE: START
-		DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_GetForUpdateCustInfo' ;
-		DECLARE		GroupID 	INT;
-		DECLARE 	Notes	 	VARCHAR(500);
-		DECLARE 	StartTime	TIMESTAMP(4);
-		DECLARE		EndTime 	TIMESTAMP(4);
-		DECLARE		Duration 	BIGINT ;
-		### PERFORMANCE: END
-		
-		SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
-		
-		### PERFORMANCE: START
-		SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-		SET 	StartTime = CURRENT_TIMESTAMP(4);
-        
-		SET Notes = CONCAT('Size:',ip_Size);	
-		INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-		VALUES(SPName, GroupID, 0, Notes, StartTime);
-		### PERFORMANCE: END
+	### PERFORMANCE: START
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName	VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_GetForUpdateCustInfo' ;
+    DECLARE		vrStepID	INT;
+	DECLARE 	vrNotes	 	VARCHAR(500);
+	DECLARE 	vrStartTime	TIMESTAMP(4);
+	DECLARE		vrEndTime 	TIMESTAMP(4);
+	DECLARE		vrDuration 	BIGINT;	
+    DECLARE		vrFromID	BIGINT;
+    DECLARE		vrToID		BIGINT;
+    DECLARE		vrBegin		BIGINT;
+    DECLARE		vrTotalRecord		INT;
+	    
+    SET		vrExecKey = CRC32((UUID_Short()));
+    SET		vrNotes = 'Get AccountID IS NULL From Transaction';	
+    SET 	vrStepID = 1;
+    
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, TotalRecord)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime, ip_Size); 
+    
+	### PERFORMANCE: END  
 	
-		SELECT acc.AccountID
-				, acc.SubscriberID
-				, (CASE	WHEN acc.IsDeposit = 1 THEN CONCAT(sub.SubscriberPrefix, acc.FirstLoginName) 
-						ELSE acc.FirstLoginName END) AS LoginName
-		FROM		FPS_DataCenter.Account acc
-		INNER JOIN	FPS_Admin.Subscriber sub
-					ON acc.SubscriberID = sub.SubscriberID
-		WHERE 	acc.IsDeposit IS NOT NULL
-				AND acc.CustID IS NULL
-		LIMIT 	ip_Size;	
-		
-		### PERFORMANCE
-		SET EndTime = CURRENT_TIMESTAMP(4);	   
-		Update FPS_DataCenter.zzTracePerformance t
-        SET	t.EndTime = EndTime
-			, t.Duration = TIMESTAMPDIFF(MICROSECOND, t.StartTime, t.EndTime)
-        WHERE	t.StartTime = StartTime AND t.SPName = SPName;
-		### PERFORMANCE 
-        
-		SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-END$$
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+	
+	SELECT acc.AccountID
+			, acc.SubscriberID
+			, (CASE	WHEN acc.IsDeposit = 1 THEN CONCAT(sub.SubscriberPrefix, acc.FirstLoginName) 
+					ELSE acc.FirstLoginName END) AS LoginName
+	FROM		FPS_DataCenter.Account acc
+	INNER JOIN	FPS_Admin.Subscriber sub
+				ON acc.SubscriberID = sub.SubscriberID
+	WHERE 	acc.IsDeposit IS NOT NULL
+			AND acc.CustID IS NULL
+	LIMIT 	ip_Size;	
+	
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    
+	### PERFORMANCE    
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END 	
+    
+	END$$
 
 DELIMITER ;
 

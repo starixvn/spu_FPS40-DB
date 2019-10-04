@@ -21,20 +21,28 @@ BEGIN
 	DECLARE	UnhandleStatus					TINYINT DEFAULT -1;
     
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_UnhandleSubscriberAction' ;
-    DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	VARCHAR(500);
-	DECLARE 	StartTime	TIMESTAMP(4);
-	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	BIGINT ;    
-   ### PERFORMANCE: END
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_UnhandleSubscriberAction' ;
+    DECLARE		vrStepID		INT;
+	DECLARE 	vrNotes	 		VARCHAR(500);
+	DECLARE 	vrStartTime		TIMESTAMP(4);
+	DECLARE		vrEndTime 		TIMESTAMP(4);
+	DECLARE		vrDuration 		BIGINT;	
+    DECLARE		vrTotalRecord	INT;
+    DECLARE		vrFromID		BIGINT;
+    DECLARE		vrToID			BIGINT;
+
+    SET		vrExecKey = CRC32((UUID_Short()));    
+    SET		vrNotes = 'Process Unhandle Subscriber and Action';		
+    SET 	vrStepID = 1;
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4); 
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime, ip_FromStagingTransID, ip_ToStagingTransID);
 	
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
+	### PERFORMANCE: END  
 	
-    ### PERFORMANCE: START
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = CURRENT_TIMESTAMP(4);
-    ### PERFORMANCE: END
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 	
     DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
     CREATE TEMPORARY TABLE Temp_UnhandleSubscriber 
@@ -80,6 +88,8 @@ BEGIN
 				AND rt.Isprocessed = 0; 
 
     #==UNHANDLE SUBSCRIBER================================================================
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    
 	INSERT INTO FPS_Admin.Subscriber (SubscriberName, CreatedDate, Status)
 	SELECT 		ts.SubscriberName
 				, MIN(ts.CreatedDate) AS CreatedDate
@@ -88,13 +98,14 @@ BEGIN
     WHERE		ts.Status IS NULL
     GROUP BY	ts.SubscriberName;
     
-    UPDATE FPS_RawTransaction.RawTransaction AS rt
+    UPDATE 		FPS_RawTransaction.RawTransaction AS rt
     INNER JOIN	Temp_UnhandleSubscriber AS tt 
 				ON rt.StagingTransID = tt.StagingTransID                
 	SET			rt.IsProcessed = UnhandleStatus; 
 
     #==UNHANDLE ACTION================================================================
-
+	
+    
 	INSERT IGNORE INTO FPS_DataCenter.ActionResult (ActionResultID, ActionResultKey, CreatedDate, ActionStatus)
 	SELECT 		 CRC32(MD5(LOWER(ts.ActionResult))) AS ActionResultID
 				, ts.ActionResult
@@ -114,19 +125,20 @@ BEGIN
 				ON rt.SubscriberName = su.SubscriberName
 	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
 				AND rt.IsProcessed = 0
-	GROUP BY	su.SubscriberID, rt.URL;
-    
+	GROUP BY	su.SubscriberID, rt.URL;    
+	
 	### PERFORMANCE
-    SET EndTime = CURRENT_TIMESTAMP(4);
-   
-    SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
-	### PERFORMANCE 
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END
     
 	#=========================================================
     DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
     #==========================================================
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
+ 
 END$$
 DELIMITER ;

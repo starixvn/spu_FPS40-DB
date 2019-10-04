@@ -14,36 +14,35 @@ BEGIN
 	Param's Explanation (filtered by):
 	*/
 
-	DECLARE DeviceStatusNew			TINYINT DEFAULT 1;			# New Device
-	DECLARE DeviceStatusOld			TINYINT DEFAULT 2;			# Old Device
-	DECLARE DeviceStatusRecover		TINYINT DEFAULT 3;			# Recover Device
-	DECLARE	MaxDeviceID				BIGINT;
-/*
-	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Device_Insert' ;
-	DECLARE		GroupID 	INT;
-	DECLARE 	Notes	 	VARCHAR(500);
+	DECLARE vrDeviceStatusNew			TINYINT DEFAULT 1;			# New Device
+	DECLARE vrDeviceStatusOld			TINYINT DEFAULT 2;			# Old Device
+	DECLARE vrDeviceStatusRecover		TINYINT DEFAULT 3;			# Recover Device
+	DECLARE	vrMaxDeviceID				BIGINT;
+
+	### PERFORMANCE START
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName	VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Device_Insert' ;
+    DECLARE		vrStepID	INT;
+	DECLARE 	vrNotes	 	VARCHAR(500);
 	DECLARE 	vrStartTime	TIMESTAMP(4);
 	DECLARE		vrEndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	BIGINT;
-	DECLARE		Step		INT;
-    DECLARE		MinID		BIGINT;
-    DECLARE		MaxID		BIGINT;
-    DECLARE		vrBegin		BIGINT;
-	### PERFORMANCE: END
-
+	DECLARE		vrDuration 	BIGINT;
 	
-
-	### PERFORMANCE: START
-	SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-	SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-	SET		vrBegin = vrStartTime;
-	SET Step = 1;
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Get Json Data');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step , Notes, vrStartTime);    
-	### PERFORMANCE: END    
-	*/
+    DECLARE		vrFromID	BIGINT;
+    DECLARE		vrToID		BIGINT;
+    DECLARE		vrBegin		BIGINT;
+    DECLARE		vrTotalRecord		INT;
+  
+    SET		vrExecKey = CRC32((UUID_Short()));
+    
+    SET		vrNotes = 'Insert(DC, DC, ASCT) and Update DeviceInfo to Transaction ';
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 1;
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime);    
+	### PERFORMANCE  END
+	
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
     
 	DROP TEMPORARY TABLE IF EXISTS Temp_InputTrans;
@@ -57,7 +56,6 @@ BEGIN
 	);
 
 	#========GET INPUT DATA===========================
-
 	INSERT INTO Temp_InputTrans(
 				StagingTransID 
 				, AccountID
@@ -76,12 +74,12 @@ BEGIN
 				 "$[*]" COLUMNS(
 				  StagingTransID 			BIGINT UNSIGNED PATH "$.StagingTransId"         
 				, AccountID					BIGINT UNSIGNED PATH "$.AccountId"
-				, SubscriberID				TINYINT PATH "$.SubscriberId"
+				, SubscriberID				INT PATH "$.SubscriberId"
                 , UserAgentID 				BIGINT UNSIGNED PATH "$.UserAgentId"         
 				, DeviceCodeID				BIGINT UNSIGNED PATH "$.DeviceCodeId"
 				 )
 			   ) AS  tmpTrans;
-/*
+    /*           
 	INSERT INTO Temp_InputTrans(
 				StagingTransID 
 				, AccountID
@@ -94,30 +92,32 @@ BEGIN
 				, SubscriberID
                 , UserAgentID
                 , DeviceCodeId
-	FROM		FPS_DataCenter.Transaction
+	FROM		FPS_DataCenter.Transaction USE INDEX(IX_Transaction_SubscriberIDAccountID)
 	WHERE		AccountID IS NOT NULL
 				AND DeviceID IS NULL
-	LIMIT 100;
+	LIMIT		100;
 */
-    /*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    
-    SELECT Min(StagingTransID), Max(StagingTransID)
-    INTO	MinID, MaxID
-    FROM	Temp_InputTrans;
+	/* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SELECT Count(1), Min(tts.StagingTransID), Max(tts.StagingTransID)
+    INTO	vrTotalRecord, vrFromID, vrToID
+    FROM	Temp_InputTrans AS tts;
     
     UPDATE	FPS_DataCenter.zzTracePerformance AS z
     SET		z.EndTime = vrEndTime
 			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-            , z.Notes = CONCAT(MinID, '_', MaxID, ': Get Json Data')
-    WHERE	z.StepID = Step;
+            , z.TotalRecord = vrTotalRecord
+            , z.FromID = vrFromID
+            , z.ToID		= vrToID
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
     
-	SET Step = 2;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Get Raw Data');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 2;
+	SET		vrNotes = 'Get Raw Transaction Data';
+    
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    ### PERFORMANCE  END */	
     
 	#======GET DATA FROM RAW TRANSACTION===========================
 	DROP TEMPORARY TABLE IF EXISTS Temp_Transaction;
@@ -157,19 +157,22 @@ BEGIN
 	INNER JOIN	FPS_RawTransaction.RawTransaction	AS rt
 				ON	tit.StagingTransID = rt.StagingTransID;
 	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+	DROP TEMPORARY TABLE IF EXISTS Temp_InputTrans;
     
-	SET Step = 3;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','UPDATE	Temp_Transaction: Device Empty ');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
+	/* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
+    
+	INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 3;
+	SET		vrNotes = 'DeviceCode EMPTY';
+     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    ### PERFORMANCE  END */
+    
 	#======DeviceCode EMPTY==================================
 	UPDATE	Temp_Transaction AS tts
 	SET		tts.DeviceID = 0
@@ -178,43 +181,42 @@ BEGIN
             , tts.LastDeviceStatus = 0
 	WHERE	tts.DeviceCode = '';
     
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+	/* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 4;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','UPDATE	Temp_Transaction: Device CodeExisting ');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 4;
+	SET		vrNotes = 'Update Temp_Transaction: DeviveCode Existing';
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    ### PERFORMANCE  END */
     
 	#=======DeviceCode EXISTING =================================
 	UPDATE		Temp_Transaction AS tts
 	INNER JOIN	FPS_DataCenter.DeviceCode AS dc
 				ON	tts.DeviceCodeID = dc.DeviceCodeID
 	SET			tts.DeviceID = dc.DeviceID
-				, tts.DeviceStatus = (CASE WHEN dc.FirstStagingTransID = tts.StagingTransID THEN dc.FirstStatus ELSE DeviceStatusOld END)
+				, tts.DeviceStatus = (CASE WHEN dc.FirstStagingTransID = tts.StagingTransID THEN dc.FirstStatus ELSE vrDeviceStatusOld END)
 				, tts.FirstDeviceCode = dc.FirstDeviceCode
 	WHERE		tts.DeviceID IS NULL;
     
+	/* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
     
-	SET		Step = 5;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','INSERT INTO Temp_NewDeviceCode: Select Min Max ');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 5;
+	SET		vrNotes = 'INSERT INTO Temp_NewDeviceCode';
+     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    ### PERFORMANCE  END */
     
 	#======GROUP BY NewDeviceCode=============================
 	DROP TEMPORARY TABLE IF EXISTS Temp_NewDeviceCode;
@@ -231,55 +233,52 @@ BEGIN
 	FROM	Temp_Transaction	AS tts
 	GROUP BY	tts.DeviceCode;
 	
-   
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+    /* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 6;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','UPDATE	Temp_Transaction: Get RecoverDevice');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
-     
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 6;
+	SET		vrNotes = 'GET Recover DeviceID'; 
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
+    ### PERFORMANCE  END */
 	#======GET Recover DeviceID==============================    
 	
-	IF EXISTS (SELECT 1 FROM Temp_Transaction tts WHERE tts.DeviceID IS NULL)
+	IF EXISTS (SELECT 1 FROM Temp_Transaction tts WHERE tts.DeviceID IS NULL LIMIT 1)
     THEN		
 		UPDATE		Temp_Transaction AS tts    
 		INNER JOIN	Temp_NewDeviceCode AS tnc
 					ON	tts.StagingTransID = tnc.MinStagingTransID
-		INNER JOIN	FPS_DataCenter.Association AS ass
-					ON tts.AccountID = ass.AccountID
+		INNER JOIN	FPS_DataCenter.Association AS ass USE INDEX(IX_Association_SubscriberID_AccountID_DeviceID)
+					ON tts.SubscriberID = ass.SubscriberID AND tts.AccountID = ass.AccountID
 		INNER JOIN	FPS_DataCenter.Device AS dv
 					ON ass.DeviceID = dv.DeviceID
 		INNER JOIN	FPS_DataCenter.DeviceFingerprint AS df
 					ON  dv.DeviceID = df.DeviceID
 					AND	FPS_DC_ISLISTSMATCHBYITEM(';',tts.FingerprintCode, df.FingerprintCode) = 1
 		SET			tts.DeviceID = df.DeviceID
-					, tts.DeviceStatus = DeviceStatusRecover
+					, tts.DeviceStatus = vrDeviceStatusRecover
 					, tts.DeviceCode = dv.FirstDeviceCode
 		WHERE		tts.DeviceID IS NULL;        
 	END IF;
 	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+	/* ### PERFORMANCE START
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 7;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','UPDATE	Temp_Transaction: Update NewDevice');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);    
     
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 7;
+	SET		vrNotes = 'Update DeviceStatus: FOR New Device';
+ 
+    ### PERFORMANCE  END */
 	#=======Update DeviceStatus: FOR New Device
     IF EXISTS (SELECT 1 FROM Temp_Transaction tts WHERE tts.DeviceID IS NULL)
     THEN
@@ -287,7 +286,7 @@ BEGIN
 		LEFT JOIN	Temp_NewDeviceCode AS tnd
 					ON	tts.StagingTransID = tnd.MinStagingTransID
 		SET			tts.DeviceID = CRC32(tts.DeviceCode)
-					, tts.DeviceStatus = (CASE WHEN tnd.DeviceCode IS NOT NULL THEN DeviceStatusNew ELSE DeviceStatusOld END)
+					, tts.DeviceStatus = (CASE WHEN tnd.DeviceCode IS NOT NULL THEN vrDeviceStatusNew ELSE vrDeviceStatusOld END)
 					, tts.FirstDeviceCode = tts.DeviceCode
 		WHERE		tts.DeviceID IS NULL;    
 	END IF;
@@ -335,7 +334,7 @@ BEGIN
 				ON	tts02.AccountID = tts.AccountID
 					AND tts.StagingTransID > tts02.StagingTransID
 					AND FPS_DC_ISLISTSMATCHBYITEM(';',tts.FingerprintCode, tts02.FingerprintCode) = 1
-	SET		tts.DeviceStatus = DeviceStatusRecover
+	SET		tts.DeviceStatus = vrDeviceStatusRecover
 			, tts.FirstDeviceCode = tts02.DeviceCode
 			, tts.DeviceID	= tts02.DeviceID;
 	
@@ -361,52 +360,69 @@ BEGIN
     INNER JOIN	Temp_Transaction_02 AS tts02
 				ON tts.DeviceID = tts02.DeviceID
 	SET			tts.LastDeviceStatus = tts02.DeviceStatus;
-
-    	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+	
+    DROP TEMPORARY TABLE Temp_Transaction_02;
+    /* ### PERFORMANCE START
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 8;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Insert new Device');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
-        
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);   
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 8;
+	SET		vrNotes = 'Insert New Device';
+	
+    ### PERFORMANCE  END */
+    
 	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	#=======Insert New Device    
 	INSERT IGNORE INTO	FPS_DataCenter.Device (DeviceID, FirstDeviceCode, UserAgentID, FirstStagingTransID, CreatedDate, DeviceStatus, InsertTime)
-	SELECT		DeviceID
-				, FirstDeviceCode
-				, UserAgentID
-				, StagingTransID
-				, CreatedDate
+	SELECT		tts.DeviceID
+				, tts.FirstDeviceCode
+				, tts.UserAgentID
+				, tts.StagingTransID
+				, tts.CreatedDate
 				, tts.DeviceStatus
                 , CURRENT_TIMESTAMP(4) 		AS InsertTime
 	FROM 		Temp_Transaction AS tts
 	INNER JOIN	Temp_NewDeviceCode	AS tnd
 				ON tts.StagingTransID = tnd.MinStagingTransID
-	WHERE		tts.DeviceStatus = DeviceStatusNew
-    ORDER BY	tts.StagingTransID Desc;
+	WHERE		tts.DeviceStatus = vrDeviceStatusNew
+    ORDER BY	tts.StagingTransID Desc;  
     
-    	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+    DROP TEMPORARY TABLE IF EXISTS Temp_DeviceMaxID;
+    CREATE TEMPORARY TABLE Temp_DeviceMaxID
+    (
+			DeviceID	BIGINT
+            , MaxStagingTransID	BIGINT	
+    );
     
-	SET Step = 9;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Insert new DeviceCode');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/      
+	INSERT INTO	Temp_DeviceMaxID(DeviceID,MaxStagingTransID)
+    SELECT		tts.DeviceID, Max(tts.StagingTransID)
+    FROM		Temp_Transaction tts
+    GROUP BY	tts.DeviceID;    
+    
+	UPDATE		FPS_DataCenter.Device AS dv
+    INNER JOIN	Temp_Transaction AS tts
+				ON dv.DeviceID = tts.DeviceID
+    INNER JOIN	Temp_DeviceMaxID	AS dmi
+				ON tts.StagingTransID = dmi.MaxStagingTransID
+    SET			dv.DeviceStatus = tts.DeviceStatus;
+    
+	/* ### PERFORMANCE START
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 9;
+	SET		vrNotes = 'INSERT IGNORE INTO	FPS_DataCenter.DeviceCode';
+    
+    ### PERFORMANCE  END */
     
 	INSERT IGNORE INTO	FPS_DataCenter.DeviceCode (DeviceCodeID, DeviceCode, DeviceID, CreatedDate, FirstDeviceCode, LastStatus, FirstStagingTransID, FirstStatus, InsertTime)
 	SELECT		tts.DeviceCodeID
@@ -421,28 +437,42 @@ BEGIN
 	FROM 		Temp_Transaction AS tts
 	INNER JOIN	Temp_NewDeviceCode	AS tnd
 				ON tts.StagingTransID = tnd.MinStagingTransID
-	WHERE		tts.DeviceStatus = DeviceStatusNew
+	WHERE		tts.DeviceStatus IN (vrDeviceStatusNew, vrDeviceStatusRecover)
 				AND tts.DeviceID !=0 ;   
-	
+                
+	/* ### PERFORMANCE START
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 10;
+	SET		vrNotes = 'UPDATE FPS_DataCenter.DeviceCode';
+    
+    ### PERFORMANCE  END */
+    
 	UPDATE 		FPS_DataCenter.DeviceCode dc
     INNER JOIN	Temp_Transaction AS tts
 				ON tts.DeviceCodeID = dc.DeviceCodeID
-	SET			dc.LastStatus = tts.LastDeviceStatus;
+	INNER JOIN	Temp_NewDeviceCode	AS tnd
+				ON tts.StagingTransID = tnd.MaxStagingTransID
+	SET			dc.LastStatus = tts.DeviceStatus;	
+                
+	/* ### PERFORMANCE START
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
     
-	SET Step = 10;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Insert new DeviceFingerprint');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/
-        
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 11;
+	SET		vrNotes = 'INSERT IGNORE INTO FPS_DataCenter.DeviceFingerprint';
+    
+    ### PERFORMANCE  END */   
+    
 	INSERT IGNORE INTO FPS_DataCenter.DeviceFingerprint(FingerprintID, FingerprintCode, FingerprintMoreInfo, UserAgentID, PluginID, DeviceID, CreatedDate, InsertTime)
     SELECT		CRC32(MD5(tts.FingerprintCode)) AS FingerprintID
 				, tts.FingerprintCode
@@ -454,20 +484,19 @@ BEGIN
                 , CURRENT_TIMESTAMP(4)	AS InsertTime
     FROM		Temp_Transaction AS tts
 	WHERE		tts.DeviceID != 0;   
-    	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+                
+	/* ### PERFORMANCE START
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 11;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Insert new Association');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);       
-    ### PERFORMANCE: END*/   
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);
+    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 12;
+	SET		vrNotes = 'INSERT IGNORE INTO FPS_DataCenter.Association';
+    
+    ### PERFORMANCE  END */
     
    INSERT IGNORE INTO FPS_DataCenter.Association(AssociationID, AccountID, DeviceID, SubscriberID, CreatedDate, SyncGraphDB, InsertTime)
 	SELECT		CRC32(CONCAT(AccountID,'A',DeviceID)) AS AssociationID
@@ -482,61 +511,49 @@ BEGIN
     GROUP BY 	tts.SubscriberID
 				, tts.AccountID
 				, tts.DeviceID;   
-   	
-	/*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
+                
+	/* ### PERFORMANCE START
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SET vrDuration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime);
     
-	SET Step = 12;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','Update Transaction DeviceID');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);      
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, EndTime, Duration, TotalRecord, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName, vrNotes, vrStartTime, vrEndTime, vrDuration, vrTotalRecord, vrFromID, vrToID);  
     
-    ### PERFORMANCE: END*/                
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    SET 	vrStepID = 13;
+	SET		vrNotes = 'UPDATE FPS_DataCenter.Transaction ts';    
+    ### PERFORMANCE  END */
+    
    UPDATE FPS_DataCenter.Transaction ts
    INNER JOIN Temp_Transaction AS tts
 				ON	ts.StagingTransID = tts.StagingTransID
    SET		ts.DeviceID = tts.DeviceID
 			, ts.DeviceStatus = tts.DeviceStatus
-			, ts.FirstDeviceCode = tts.DeviceCode;
+			, ts.FirstDeviceCode = tts.FirstDeviceCode;
 	
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	
-    /*### PERFORMANCE: START
-    SET		vrEndTime = CURRENT_TIMESTAMP(4);
+	### PERFORMANCE
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+	
+    SELECT Count(1), Min(tts.StagingTransID), Max(tts.StagingTransID)
+    INTO	vrTotalRecord, vrFromID, vrToID
+    FROM	Temp_Transaction AS tts;
+    
     UPDATE	FPS_DataCenter.zzTracePerformance AS z
     SET		z.EndTime = vrEndTime
 			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
-    
-	SET Step = 0;
-    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
-    SET Notes = CONCAT(MinID, '_', MaxID, ': ','All');	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime)
-    VALUES(SPName, GroupID, Step, Notes, vrStartTime);      
-    
-    ### PERFORMANCE: END*/     
-    /*
-    ### PERFORMANCE
-     SET	vrEndTime = CURRENT_TIMESTAMP(4);
-    UPDATE	FPS_DataCenter.zzTracePerformance AS z
-    SET		z.EndTime = vrEndTime
-			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
-    WHERE	z.StepID = Step;
-    
-	### PERFORMANCE */
+            , z.TotalRecord = vrTotalRecord
+            , z.FromID = vrFromID
+            , z.ToID		= vrToID
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END
 	
-	#============================================
+    #============================================
     DROP TEMPORARY TABLE IF EXISTS Temp_NewDeviceCode;
 	DROP TEMPORARY TABLE IF EXISTS Temp_Transaction;
-    DROP TEMPORARY TABLE IF EXISTS Temp_Transaction_02;
-	DROP TEMPORARY TABLE IF EXISTS Temp_InputTrans;
-    #==============================================
 
-    	  
+    #==============================================
 END$$
 
 DELIMITER ;

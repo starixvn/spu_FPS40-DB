@@ -18,7 +18,7 @@ CREATE TABLE FPS_Admin.Subscriber (
 ,	CreatedDate			DATETIME	 	NULL
 ,	CreatedBy			INT NULL
 ,	IsDeposit			TINYINT	NULL				
-,	Status				TINYINT	NOT NULL					COMMENT '0: Inactive; 1: Active; 2: Unhandle (sub that not integrate, is insert new from transaction)'
+,	Status				TINYINT	NOT NULL					COMMENT '0: Inactive; 1: Active; -1: Unhandle (sub that not integrate, is insert new from transaction)'
 ,	IsTest				TINYINT	NULL
 ,	PRIMARY KEY	PK_Subscriber_SubscriberID (SubscriberID)
 ,	INDEX IX_Subscriber_SubscriberName_SubScriberPrefix (SubscriberName,SubScriberPrefix)

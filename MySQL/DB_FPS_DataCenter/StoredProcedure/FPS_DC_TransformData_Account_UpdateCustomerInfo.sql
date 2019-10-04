@@ -19,22 +19,29 @@ BEGIN
 	DECLARE RowCount INT UNSIGNED;
 	DECLARE XpathRow VARCHAR(255);
     
-    ### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_UpdateCustomerInfo' ;
-    DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	VARCHAR(500);
-	DECLARE 	StartTime	TIMESTAMP(4);
-	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	BIGINT ;
-    DECLARE		NoOfAccount	INT;
-    ### PERFORMANCE: END
+	### PERFORMANCE: START
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName	VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_UpdateCustomerInfo' ;
+    DECLARE		vrStepID	INT;
+	DECLARE 	vrNotes	 	VARCHAR(500);
+	DECLARE 	vrStartTime	TIMESTAMP(4);
+	DECLARE		vrEndTime 	TIMESTAMP(4);
+	DECLARE		vrDuration 	BIGINT;	
+    DECLARE		vrTotalRecord		INT;
+    DECLARE		vrFromID	BIGINT;
+    DECLARE		vrToID		BIGINT;
+
+    SET		vrExecKey = CRC32((UUID_Short()));    
+    SET		vrNotes = 'UpdateCustomerInfo';		
+    SET 	vrStepID = 1;
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4);  
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime);
+	  
+	### PERFORMANCE: END  
 	
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
-	
-    ### PERFORMANCE: START
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = CURRENT_TIMESTAMP(4);
-    ### PERFORMANCE: END
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
 	
     
     #=======================
@@ -56,35 +63,38 @@ BEGIN
 	);
 
 	#=====================================================
-    SET op_ErrorCode =0;
-    SELECT op_ErrorMessage='Successfull';
     
-    SET RowCount = EXTRACTVALUE(custDataXml,'count(//root/customer)');
+    INSERT INTO Temp_Account(AccountID, SubscriberID, IsDeposit, FirstLoginName, CustID, Username, Username2, RoleID, CurrencyID, CurrencyName, CreatedDate)
+	SELECT	AccountID
+			, SubscriberID
+            , IsDeposit
+            , FirstLoginName
+            , CustID
+            , Username
+            , Username2
+            , RoleID
+            , CurrencyID
+            , CurrencyName
+            , CreatedDate
+	FROM
+	JSON_TABLE(
+				ip_CustomerInfo
+				, "$[*]" COLUMNS(
+					AccountID 		BIGINT PATH "$.AccountId"
+				,	SubscriberID 	SMALLINT PATH "$.SubscriberId"
+				,	IsDeposit 		TINYINT PATH "$.IsDeposit"
+				,	FirstLoginName	VARCHAR(50) PATH "$.FirstLoginName"
+				,	CustID 			BIGINT PATH "$.CustId"
+				,	Username 		VARCHAR(50) PATH "$.Username"
+				,	Username2 		VARCHAR(50) PATH "$.Username2"
+				,	RoleID 			TINYINT PATH "$.RoleId"
+				,	CurrencyID 		TINYINT PATH "$.CurrencyId"
+				,	CurrencyName	VARCHAR(50) PATH "$.CurrencyName"
+				,	CreatedDate 	DATETIME PATH "$.CreatedDate"								 
+				)
+				) AS  tmpCustomerInfo;
     
-    WHILE RowIndex < RowCount DO
-		SET RowIndex := RowIndex + 1;
-		SET XpathRow = CONCAT(
-				'//root/customer['
-			,   RowIndex
-			,   ']');            
-            
-		#========1.GET DATA FROM XML TO TEMP TABLE===============================
-		
-		INSERT INTO Temp_Account(AccountID, SubscriberID, IsDeposit, FirstLoginName, CustID, Username, Username2, RoleID, CurrencyID, CurrencyName, CreatedDate)
-		SELECT 	EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::AccountID'))
-				, EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::SubscriberID'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::IsDeposit'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::FirstLoginName'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::CustID'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::Username'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::Username2'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::RoleID'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::CurrencyID'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::CurrencyName'))
-				 , EXTRACTVALUE(custDataXml,CONCAT(XpathRow,'/attribute::CreatedDate')
-		);
-    
-	END WHILE;
+    #=====================================================   
     
     UPDATE		FPS_DataCenter.Account AS acc
 	INNER JOIN	Temp_Account tempAcc 
@@ -97,15 +107,17 @@ BEGIN
 		,acc.CurrencyID = tempAcc.CurrencyID
 		,acc.CurrencyName = tempAcc.CurrencyName;
 	
-    ### PERFORMANCE
+    
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	
-    SET EndTime = CURRENT_TIMESTAMP(4);
-	
-    SET NoOfAccount = (SELECT Count(1) FROM Temp_Account);
-    SET Notes = CONCAT('NoOfAccount: ', NoOfAccount );	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
-	### PERFORMANCE 
+	### PERFORMANCE
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END
 END$$
 
 DELIMITER ;

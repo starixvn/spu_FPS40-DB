@@ -16,22 +16,28 @@ BEGIN
 	Param's Explanation (filtered by):
 	*/
 
-    ####
-	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_Insert' ;
-    DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	VARCHAR(500);
-	DECLARE 	StartTime	TIMESTAMP(4);
-	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	BIGINT ;
-    ### PERFORMANCE: END
-	
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
-	
     ### PERFORMANCE: START
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = CURRENT_TIMESTAMP(4);
-    ### PERFORMANCE: END
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName	VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_Insert' ;
+    DECLARE		vrStepID	INT;
+	DECLARE 	vrNotes	 	VARCHAR(500);
+	DECLARE 	vrStartTime	TIMESTAMP(4);
+	DECLARE		vrEndTime 	TIMESTAMP(4);
+	DECLARE		vrDuration 	BIGINT;	
+    DECLARE		vrTotalRecord		INT;
+  
+    SET		vrExecKey = CRC32((UUID_Short()));    
+    SET		vrNotes = 'Insert New Account by Json';	
+    SET 	vrStepID = 1;
+    
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4);
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime);    
+    	
+	### PERFORMANCE: END  
+    
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+	
 
     #=========================================================================================
     DROP TEMPORARY TABLE IF EXISTS Temp_Account;
@@ -50,7 +56,7 @@ BEGIN
 		, CurrencyID			SMALLINT
 		, CurrencyName			VARCHAR(50)        
 	);   
-      
+   
     INSERT INTO Temp_Account(
 				SubscriberID, 
 				IsDeposit, 
@@ -80,8 +86,7 @@ BEGIN
 				, CurrencyName			VARCHAR(50) PATH "$.CurrencyName"  
                 , CreatedDate			DATETIME PATH "$.CreatedDate"
 				 )
-			   ) AS  tmpAcc;
-               
+			   ) AS  tmpAcc;               
    
 	INSERT IGNORE INTO FPS_DataCenter.Account
 		(
@@ -120,18 +125,24 @@ BEGIN
 				ON CRC32(LOWER(tac.LoginNameWithPrefix)) IN (acc.FirstLoginNameID, acc.UsernameID, acc.Username2ID)
 	WHERE	acc.AccountID IS NULL;
 
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
     
-	### PERFORMANCE
-    SET EndTime = CURRENT_TIMESTAMP(4);
-	
-    SET Notes = CONCAT('NoOfAccount',(SELECT COUNT(1) FROM Temp_Account));
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
-	### PERFORMANCE 
+	### PERFORMANCE  
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
+    SELECT Count(1)
+    INTO	vrTotalRecord
+    FROM	Temp_Account AS tts;
+    
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+            , z.TotalRecord = vrTotalRecord
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END
     	
     #============================================
 	DROP TEMPORARY TABLE IF EXISTS Temp_Account;
-    #==============================================
-	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    #============================================
+
 END$$
 DELIMITER ;

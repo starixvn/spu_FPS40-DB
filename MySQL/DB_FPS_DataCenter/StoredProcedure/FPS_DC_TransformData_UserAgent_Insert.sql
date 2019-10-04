@@ -17,20 +17,28 @@ BEGIN
 */
     
 	### PERFORMANCE: START
-	DECLARE		SPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_UserAgent_Insert' ;
-    DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	VARCHAR(500);
-	DECLARE 	StartTime	TIMESTAMP(4);
-	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	BIGINT ;
-    ### PERFORMANCE: END
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName		VARCHAR(200) DEFAULT 'FPS_DC_TransformData_UserAgent_Insert' ;
+    DECLARE		vrStepID		INT;
+	DECLARE 	vrNotes	 		VARCHAR(500);
+	DECLARE 	vrStartTime		TIMESTAMP(4);
+	DECLARE		vrEndTime 		TIMESTAMP(4);
+	DECLARE		vrDuration 		BIGINT;	
+    DECLARE		vrTotalRecord	INT;
+    DECLARE		vrFromID		BIGINT;
+    DECLARE		vrToID			BIGINT;
+
+    SET		vrExecKey = CRC32((UUID_Short()));    
+    SET		vrNotes = 'Inser UserAgent';		
+    SET 	vrStepID = 1;    
+	SET 	vrStartTime = CURRENT_TIMESTAMP(4); 
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, FromID, ToID)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime, ip_FromStagingTransID, ip_ToStagingTransID);
+	 
+	### PERFORMANCE: END  
 	
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;   
-	
-    ### PERFORMANCE: START
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = CURRENT_TIMESTAMP(4);
-    ### PERFORMANCE: END
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  
     
     DROP TEMPORARY TABLE IF EXISTS Temp_UserAgent;
     CREATE TEMPORARY TABLE Temp_UserAgent 
@@ -59,15 +67,19 @@ BEGIN
                 , tu.CreatedDate
     FROM		Temp_UserAgent AS tu;     
     
+	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	
 	### PERFORMANCE
-    SET EndTime = CURRENT_TIMESTAMP(4);
-   
-    SET Notes = CONCAT(CONCAT(ip_FromStagingTransID, '_'), ip_ToStagingTransID);	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    VALUES(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(MICROSECOND,StartTime, EndTime));
-	### PERFORMANCE 
+	SET	vrEndTime = CURRENT_TIMESTAMP(4);
     
-    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+            , z.TotalRecord = vrTotalRecord
+            , z.FromID = vrFromID
+            , z.ToID		= vrToID
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END
     
 END$$
 DELIMITER ;

@@ -1,25 +1,36 @@
 DELIMITER $$
 
 USE FPS_RawTransaction$$
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_TransformData_GetPackage;
+
+DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_TransformData_GetPackage$$
+
 CREATE PROCEDURE FPS_RawTransaction.FPS_RT_TransformData_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
 BEGIN
+	DECLARE		Counter		INT UNSIGNED DEFAULT 0;
+    DECLARE		IsStop		INT DEFAULT 0;
+    
 	### PERFORMANCE: START
-	DECLARE		SPName		varchar(200) DEFAULT 'FPS_RT_TransformData_GetPackage' ;
-    DECLARE		GroupID 	INT;
-    DECLARE 	Notes	 	varchar(500) DEFAULT 'GET Package: ';
-	DECLARE 	StartTime	TIMESTAMP(4);
-	DECLARE		EndTime 	TIMESTAMP(4);
-	DECLARE		Duration 	int ;
-    DECLARE		Counter		INT UNSIGNED DEFAULT 0;
-    DECLARE		IsStop		INT DEFAULT 0; 
-    
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-    
-    SET 	GroupID = IFNULL((SELECT MAX(pe.GroupID) FROM  FPS_DataCenter.zzTracePerformance pe),0) + 1;
-    SET 	StartTime = Current_TimeStamp(4);
+    DECLARE		vrExecKey		BIGINT	UNSIGNED;
+	DECLARE		vrSPName		VARCHAR(200)  DEFAULT 'FPS_RT_TransformData_GetPackage' ;
+    DECLARE		vrStepID		INT;
+	DECLARE 	vrNotes	 		VARCHAR(500);
+	DECLARE 	vrStartTime		TIMESTAMP(4);
+	DECLARE		vrEndTime 		TIMESTAMP(4);
+	DECLARE		vrDuration 		BIGINT;	
+    DECLARE		vrTotalRecord	INT;
+    DECLARE		vrFromID		BIGINT;
+    DECLARE		vrToID			BIGINT;
 
-    ### PERFORMANCE: END
+    SET		vrExecKey = CRC32((UUID_Short()));    
+    SET		vrNotes = CONCAT('Input: ',ip_NoOfTickets,'_', ip_NoOfBatch) ;		
+    SET 	vrStepID = 1;
+    
+    SET 	vrStartTime = CURRENT_TIMESTAMP(4);	
+    
+    INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime)
+    VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime);
+
+	### PERFORMANCE: END
     
     DROP TEMPORARY TABLE IF EXISTS Temp_StagingTrans;
     CREATE TEMPORARY TABLE Temp_StagingTrans 
@@ -61,14 +72,23 @@ BEGIN
         , tmpTT.MaxStagingTransId
 	FROM  Temp_StagingTrans AS tmpTT;
     
-    #SELECT 4616 AS MinStagingTransID, 4715 AS MaxStagingTransID;
-    ### PERFORMANCE
-    SET EndTime = Current_TimeStamp(4);
-   
-    SET Notes = CONCAT(Notes, ip_NoOfTickets);	
-    INSERT INTO FPS_DataCenter.zzTracePerformance (SPName, GroupID, StepID, Notes, StartTime, EndTime, Duration)
-    Values(SPName, GroupID, 0, Notes, StartTime, EndTime, TIMESTAMPDIFF(Microsecond,StartTime, EndTime));
-	### PERFORMANCE 
-	SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;  
+   SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	
+	### PERFORMANCE
+	SET		vrEndTime = CURRENT_TIMESTAMP(4);
+    
+    SELECT 	Count(1), Min(MinStagingTransId), Max(MaxStagingTransId)
+    INTO	vrTotalRecord, vrFromID, vrToID
+    FROM	Temp_StagingTrans AS tts;
+    
+    UPDATE	FPS_DataCenter.zzTracePerformance AS z
+    SET		z.EndTime = vrEndTime
+			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
+            , z.TotalRecord = vrTotalRecord
+            , z.FromID = vrFromID
+            , z.ToID		= vrToID
+
+    WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
+    ### PERFORMANCE: END 
 END$$
 DELIMITER ;
