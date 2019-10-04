@@ -35,8 +35,8 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS Temp_StagingTrans;
     CREATE TEMPORARY TABLE Temp_StagingTrans 
     (		
-		MinStagingTransId			INT
-        , MaxStagingTransId			INT
+		MinStagingTransId			BIGINT UNSIGNED
+        , MaxStagingTransId			BIGINT UNSIGNED
     ); 
     
 	
@@ -51,7 +51,7 @@ BEGIN
 						SELECT	rt.StagingTransID	
 						FROM 	FPS_RawTransaction.RawTransaction AS rt
 						WHERE	rt.IsProcessed = ip_IsProcessed
-									And StagingTransID > Counter
+									AND StagingTransID > Counter
 						LIMIT	 ip_NoOfTickets
 					) pk;
                 

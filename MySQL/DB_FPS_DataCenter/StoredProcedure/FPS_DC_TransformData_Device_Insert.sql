@@ -2,7 +2,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Device_Insert$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Device_Insert(IN ip_TransJson TEXT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Device_Insert(IN ip_TransJson LONGTEXT)
 BEGIN
 	/*
 	Created: 20190730@Casey.Huynh
