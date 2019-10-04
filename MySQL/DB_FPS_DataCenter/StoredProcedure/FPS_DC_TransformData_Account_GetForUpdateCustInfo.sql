@@ -49,8 +49,7 @@ BEGIN
 	FROM		FPS_DataCenter.Account acc
 	INNER JOIN	FPS_Admin.Subscriber sub
 				ON acc.SubscriberID = sub.SubscriberID
-	WHERE 	acc.IsDeposit IS NOT NULL
-			AND acc.CustID IS NULL
+	WHERE 	acc.CustID = 0
 	LIMIT 	ip_Size;	
 	
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;

@@ -2,8 +2,8 @@ DELIMITER $$
 
 USE FPS_RawTransaction$$
 
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_TransformData_UpdateCompletedProcess$$
-CREATE PROCEDURE FPS_RawTransaction.FPS_RT_TransformData_UpdateCompletedProcess(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
+DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_ST_TransformData_UpdateCompletedProcess$$
+CREATE PROCEDURE FPS_RawTransaction.FPS_ST_TransformData_UpdateCompletedProcess(IN ip_FromStagingTransID BIGINT, IN ip_ToStagingTransID BIGINT)
 BEGIN
 	/*
 	Created: 20190730@Casey.Huynh

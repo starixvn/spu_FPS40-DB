@@ -2,9 +2,9 @@ DELIMITER $$
 
 USE FPS_RawTransaction$$
 
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_TransformData_GetPackage$$
+DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_ST_TransformData_GetPackage$$
 
-CREATE PROCEDURE FPS_RawTransaction.FPS_RT_TransformData_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
+CREATE PROCEDURE FPS_RawTransaction.FPS_ST_TransformData_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
 BEGIN
 	DECLARE		Counter		INT UNSIGNED DEFAULT 0;
     DECLARE		IsStop		INT DEFAULT 0;
