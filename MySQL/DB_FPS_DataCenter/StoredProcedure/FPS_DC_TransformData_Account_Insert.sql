@@ -74,7 +74,7 @@ BEGIN
 			   JSON_TABLE(
 				ip_AccountJson,
 				 "$[*]" COLUMNS(
-				  SubscriberID 			BIGINT PATH "$.SubscriberID"         
+				  SubscriberID 			BIGINT PATH "$.SubscriberId"         
 				, IsDeposit				TINYINT PATH "$.IsDeposit"   
 				, LoginName				VARCHAR(50) PATH "$.LoginName"   
 				, LoginNameWithPrefix 	VARCHAR(100) PATH "$.LoginNameWithPrefix"   
@@ -82,7 +82,7 @@ BEGIN
 				, Username				VARCHAR(50) PATH "$.Username"   
 				, Username2				VARCHAR(50) PATH "$.Username2"   
 				, RoleID				TINYINT	PATH "$.RoleID"   
-				, CurrencyID			SMALLINT PATH "$.CurrencyID"   
+				, CurrencyID			SMALLINT PATH "$.CurrencyId"   
 				, CurrencyName			VARCHAR(50) PATH "$.CurrencyName"  
                 , CreatedDate			DATETIME PATH "$.CreatedDate"
 				 )

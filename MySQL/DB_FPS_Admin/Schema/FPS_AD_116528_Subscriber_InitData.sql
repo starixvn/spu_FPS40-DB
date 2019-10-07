@@ -11,7 +11,7 @@ USE `FPS_Admin`;
 
 LOCK TABLES `Subscriber` WRITE;
 
-INSERT INTO `Subscriber`
+INSERT INTO `Subscriber`(SubscriberID, SubscriberName, SubscriberPrefix, CreatedDate, CreatedBy, IsDeposit, Status, IsTest)
 VALUES   (0,'Master',NULL,'2012-01-01 00:00:00',8,0,1,0)
 		,(1,'Mayfair','Mayfair$','2012-05-21 00:00:00',8,1,1,0)
         ,(2,'Alpha','',NULL,8,0,1,0)
@@ -194,7 +194,7 @@ VALUES   (0,'Master',NULL,'2012-01-01 00:00:00',8,0,1,0)
 		,(2334,'Sunwin','Sunwin$','2019-04-10 00:00:00',8,1,1,0)
 		,(2335,'UwinY','UwinY$','2019-04-10 00:00:00',8,1,1,0)
 		,(2337,'YAYOU','YAYOU$','2019-04-10 00:00:00',8,1,1,0)
-		,(2338,'CN88','CN88$','2019-04-24 00:00:00',8,1,1,0)
+		,(2338,'CN88','CN88$','2019-04-24 00:00:00',8,0,1,0)
 		,(2339,'AlphaCN88','','2019-04-24 00:00:00',8,0,1,0)
 		,(2340,'AnvoFH','AnvoFH$','2019-05-15 00:00:00',8,1,1,0)
 		,(2341,'BoinGroup','BoinGroup$','2019-05-15 00:00:00',8,1,1,0)

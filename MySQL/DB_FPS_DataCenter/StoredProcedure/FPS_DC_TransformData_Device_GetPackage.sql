@@ -1,10 +1,10 @@
 DELIMITER $$
 
-USE FPS_RawTransaction$$
+USE FPS_DataCenter$$
 
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_DC_TransformData_Device_Transaction_GetPackage_v1$$
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Device_Transaction_GetPackage$$
 
-CREATE PROCEDURE FPS_RawTransaction.FPS_DC_TransformData_Device_Transaction_GetPackage_v1 (IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Device_Transaction_GetPackage(IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
 BEGIN
 	DECLARE		TotalRecord		INT UNSIGNED DEFAULT 0;
 	DECLARE		Batch			TINYINT DEFAULT 1;
