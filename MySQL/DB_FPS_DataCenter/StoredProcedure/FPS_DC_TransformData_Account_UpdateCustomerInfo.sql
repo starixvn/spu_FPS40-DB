@@ -4,7 +4,7 @@ USE FPS_DataCenter$$
 
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Account_UpdateCustomerInfo$$
 
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_UpdateCustomerInfo (IN custDataXml LONGTEXT, OUT op_ErrorCode TINYINT, OUT op_ErrorMessage VARCHAR(500))
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_UpdateCustomerInfo (IN ip_CustomerInfo JSON)
 BEGIN
 /*
 	Created: 20190620@Harvey
@@ -15,10 +15,6 @@ BEGIN
 	Revisions:
 	Param's Explanation (filtered by):
 */
-	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
-	DECLARE RowCount INT UNSIGNED;
-	DECLARE XpathRow VARCHAR(255);
-    
 	### PERFORMANCE: START
     DECLARE		vrExecKey		BIGINT	UNSIGNED;
 	DECLARE		vrSPName	VARCHAR(200) DEFAULT 'FPS_DC_TransformData_Account_UpdateCustomerInfo' ;
@@ -94,19 +90,17 @@ BEGIN
 				)
 				) AS  tmpCustomerInfo;
     
-    #=====================================================   
-    
+    #=====================================================    
     UPDATE		FPS_DataCenter.Account AS acc
 	INNER JOIN	Temp_Account tempAcc 
-				ON	acc.AccountID = tempAcc.AccountID
-					AND acc.SubscriberID = tempAcc.SubscriberID
-	SET acc.CustID = tempAcc.CustID
-		,acc.Username = tempAcc.Username
-		,acc.Username2 = tempAcc.Username2
-		,acc.RoleID = tempAcc.RoleID
-		,acc.CurrencyID = tempAcc.CurrencyID
-		,acc.CurrencyName = tempAcc.CurrencyName;
-	
+				ON	acc.AccountID 			= tempAcc.AccountID
+					AND acc.SubscriberID	= tempAcc.SubscriberID
+	SET acc.CustID			= tempAcc.CustID
+		,acc.Username		= tempAcc.Username
+		,acc.Username2		= tempAcc.Username2
+		,acc.RoleID			= tempAcc.RoleID
+		,acc.CurrencyID		= tempAcc.CurrencyID
+		,acc.CurrencyName	= tempAcc.CurrencyName;	
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	

@@ -474,7 +474,7 @@ BEGIN
     ### PERFORMANCE  END */   
     
 	INSERT IGNORE INTO FPS_DataCenter.DeviceFingerprint(FingerprintID, FingerprintCode, FingerprintMoreInfo, UserAgentID, PluginID, DeviceID, CreatedDate, InsertTime)
-    SELECT		CRC32(MD5(tts.FingerprintCode)) AS FingerprintID
+    SELECT		CRC32(tts.FingerprintCode) AS FingerprintID
 				, tts.FingerprintCode
                 , tts.FingerprintMoreInfo
                 , tts.UserAgentID

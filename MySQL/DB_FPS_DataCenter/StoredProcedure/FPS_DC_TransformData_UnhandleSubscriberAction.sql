@@ -82,7 +82,7 @@ BEGIN
                 , rt.CreatedDate
 	FROM		FPS_RawTransaction.RawTransaction AS rt
     LEFT JOIN	FPS_DataCenter.ActionResult AS ac
-				ON ac.ActionResultID =  CRC32(MD5(LOWER(rt.ActionResult))) 
+				ON ac.ActionResultID =  CRC32(LOWER(rt.ActionResult)) 
 	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
 				AND ac.ActionResultID IS NULL
 				AND rt.Isprocessed = 0; 
@@ -107,7 +107,7 @@ BEGIN
 	
     
 	INSERT IGNORE INTO FPS_DataCenter.ActionResult (ActionResultID, ActionResultKey, CreatedDate, ActionStatus)
-	SELECT 		 CRC32(MD5(LOWER(ts.ActionResult))) AS ActionResultID
+	SELECT 		 CRC32(LOWER(ts.ActionResult)) AS ActionResultID
 				, ts.ActionResult
 				, MIN(ts.CreatedDate)	AS CreatedDate
 				, UnhandleStatus		AS ActionStatus # UnhandleStatus
@@ -116,7 +116,7 @@ BEGIN
 	
     #===INSERT SUBCRIBERURL    
     INSERT IGNORE INTO FPS_DataCenter.SubscriberURL(SubscriberURLID, URL, SubscriberID, CreatedDate)
-    SELECT		CRC32(MD5(LOWER(rt.URL))) AS SubscriberURLID
+    SELECT		CRC32(LOWER(rt.URL)) AS SubscriberURLID
 				, rt.URL
                 , su.SubscriberID
                 , MIN(rt.CreatedDate)

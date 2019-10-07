@@ -44,12 +44,12 @@ BEGIN
 				,  TransDate, CreatedDate, IP, PluginID, Flagged, LoginNameWithPrefixID, TransStatus, InsertTime)                
 	SELECT 		rt.StagingTransID
 				, su.SubscriberID
-				, CRC32(MD5(LOWER(rt.URL))) AS SubURLID
-                , CRC32(MD5(LOWER(rt.ActionResult))) ActionResultID
-				, CRC32(MD5(LOWER(rt.UserAgent))) AS UserAgentID
-                , CRC32(MD5(rt.FingerprintCode)) AS FingerprintCodeID
+				, CRC32(LOWER(rt.URL)) AS SubURLID		#CRC32(MD5(LOWER(rt.URL)))
+                , CRC32(LOWER(rt.ActionResult)) ActionResultID
+				, CRC32(LOWER(rt.UserAgent)) AS UserAgentID
+                , CRC32(rt.FingerprintCode) AS FingerprintCodeID
                 , rt.DeviceCode
-                , CRC32(MD5(rt.DeviceCode)) AS DeviceCodeID
+                , CRC32(rt.DeviceCode) AS DeviceCodeID
 				, rt.LoginName				            
 				, rt.TransDate
 				, rt.CreatedDate

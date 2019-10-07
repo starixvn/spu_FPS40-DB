@@ -18,7 +18,7 @@ SELECT		'' AS 'BrowserName'
             , '2011-01-01';
 
 INSERT INTO FPS_DataCenter.UserAgent(UserAgentID, UserAgent, BrowserID, OSID, OS, Browser, CreatedDate)
-SELECT		1136548044	AS UserAgentID
+SELECT		0			AS UserAgentID
 			, ''		AS UserAgent
             , 1			AS BrowserID
             , 1			AS OSID
@@ -34,4 +34,5 @@ SELECT		0 				AS DeviceID
             , '2011-01-01'	AS	CreatedDate
             , 0				AS	DeviceStatus
             , '2011-01-01'	AS InsertTime;
-            
+
+
