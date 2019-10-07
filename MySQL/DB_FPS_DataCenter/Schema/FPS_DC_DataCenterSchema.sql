@@ -319,4 +319,4 @@ CREATE TABLE zzTracePerformance (
     
 	, PRIMARY KEY PK_zzTracePerformance_ID(ID)
 	, INDEX IX_zzTracePerformance_ExecKey_StepID(ExecKey,StepID)
-) ENGINE=InnoDB AUTO_INCREMENT=1904 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB ;
