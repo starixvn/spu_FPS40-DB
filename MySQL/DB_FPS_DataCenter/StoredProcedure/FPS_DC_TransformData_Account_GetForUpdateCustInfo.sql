@@ -7,8 +7,8 @@ DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_TransformData_Account_GetForUpdat
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_TransformData_Account_GetForUpdateCustInfo (in ip_Size INT)
 BEGIN
 	/*
-		Created: 20190620@Harvey
-		Task : Get Account for updating IBC info
+		Created: 20190620@Terry
+		Task : Update IPTableLog
 		DB: FPS_DataCenter
 		Original:
 
