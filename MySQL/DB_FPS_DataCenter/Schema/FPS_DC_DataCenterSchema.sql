@@ -190,10 +190,30 @@ CREATE TABLE FPS_DataCenter.Device(
         , Status				TINYINT        					NULL COMMENT '0: Inactive; 1: Active'
         , CreatedDate			DATETIME
         
-        , PRIMARY KEY	PK_IPRange_IPRangeID(IPRangeLocationID)
-        , INDEX			IX_IPRangeLocation_FromIP_ToIP(FromIP,ToIP)
+        , PRIMARY KEY	PK_IPRangeLocation_IPRangeLocationID(IPRangeLocationID)
+        , UNIQUE KEY	UK_IPRangeLocation_FromIP_ToIP(FromIP,ToIP)
         , INDEX 		IX_IPRangeLocation_IPRangeLocationCode(IPRangeLocationCode)
+        
      ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+     
+     	CREATE TABLE FPS_DataCenter.IPRangeLocation_Initial(
+		IPRangeLocationID		INT				AUTO_INCREMENT	NOT NULL
+        , IPRangeLocationCode 	VARCHAR(64)	
+		, FromIP				DECIMAL(50,0)					NOT NULL
+        , ToIP					DECIMAL(50,0)					NOT NULL
+        , CountryCode			VARCHAR(10)						NULL
+        , CountryName			VARCHAR(80)						NULL
+        , Region				VARCHAR(128)					NULL
+        , City					VARCHAR(100)					NULL
+        , ISPName				VARCHAR(256)					NULL
+        , Status				TINYINT        					NULL COMMENT '0: Inactive; 1: Active'
+        , CreatedDate			DATETIME
+        
+        , PRIMARY KEY	PK_IPRangeLocationInit_IPRangeLocationID(IPRangeLocationID)
+        , INDEX			IX_IPRangeLocationInit_FromIP_ToIP(FromIP,ToIP)
+        , INDEX 		IX_IPRangeLocationInit_IPRangeLocationCode(IPRangeLocationCode)
+     ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
+
 
 # =======UserAgent============================================
 	CREATE TABLE FPS_DataCenter.UserAgent(
