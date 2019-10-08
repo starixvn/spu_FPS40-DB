@@ -19,7 +19,7 @@ BEGIN
     
 	CREATE TEMPORARY TABLE Temp_Association (
 	  AssociationID BIGINT
-      , SyncGraphDB TINYINT(DC_UpdateIsSyncGraphDBByAssociationID1)
+      , SyncGraphDB TINYINT
 	);
     
 	SET RowCount = EXTRACTVALUE(ip_RawTransXml,'count(//root/association)');     
