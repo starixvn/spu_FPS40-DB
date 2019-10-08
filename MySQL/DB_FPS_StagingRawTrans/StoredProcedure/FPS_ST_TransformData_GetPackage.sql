@@ -6,6 +6,16 @@ DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_ST_TransformData_GetPackage$$
 
 CREATE PROCEDURE FPS_RawTransaction.FPS_ST_TransformData_GetPackage (IN ip_IsProcessed TINYINT, IN ip_NoOfTickets INT, IN ip_NoOfBatch INT)
 BEGIN
+	/*
+	Created: 20190730@Casey.Huynh
+	Task : GET Transaction To Transform
+	DB: FPS_RawTransaction(Staging)
+	Original:
+
+	Revisions:
+	Param's Explanation (filtered by):
+	*/
+
 	DECLARE		Counter		INT UNSIGNED DEFAULT 0;
     DECLARE		IsStop		INT DEFAULT 0;
     

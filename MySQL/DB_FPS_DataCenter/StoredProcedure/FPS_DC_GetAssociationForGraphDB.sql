@@ -1,4 +1,10 @@
-/*
+
+DELIMITER $$
+USE FPS_DataCenter$$
+
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT, IN ip_Size INT)
+BEGIN
+	/*
 	Created:	20190610@Casey.Huynh
 	Task :		Get Association list by SyncGraphDB status;
 	DB:			FPS_DataCenter
@@ -6,12 +12,7 @@
 
 	Revisions:
 	Param's Explanation (filtered by):
-*/
-DELIMITER $$
-USE FPS_DataCenter$$
-
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT(1), IN ip_Size INT)
-BEGIN	
+	*/
     #=========================================================================================
     DROP TABLE IF EXISTS Temp_Association;
 	
@@ -20,14 +21,14 @@ BEGIN
 		AssociationID		BIGINT
 		, DeviceID			BIGINT
         , AccountID			BIGINT
-        , SubscriberID		INT
+        , SubscriberID		SMALLINT
         , SubscriberName	VARCHAR(30)		CHARACTER SET utf8	NULL
-        , IsDeposit			TINYINT(1)
+        , IsDeposit			TINYINT
         , CustID			BIGINT								NULL
 		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
 		, Username2			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, RoleID			TINYINT(1)							NULL
-		, CurrencyID		TINYINT(2)							NULL
+		, RoleID			TINYINT							NULL
+		, CurrencyID		SMALLINT						NULL
 		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL        
 	);    
 	   

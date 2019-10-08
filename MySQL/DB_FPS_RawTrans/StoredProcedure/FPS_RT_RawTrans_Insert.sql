@@ -1,19 +1,19 @@
-/*
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_RawTrans_Insert$$
+CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTrans_Insert(IN ip_RawTransJson LONGTEXT)
+BEGIN
+
+	/*
 	Created: 20190610@Casey.Huynh
-	Task : Insert to Raw Table by XML file
+	Task : Insert to Raw Table
 	DB: FPS_RawTrans
 	Original:
 
 	Revisions:
 	Param's Explanation (filtered by):
-*/
+	*/
 
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS FPS_RawTransaction.FPS_RT_RawTrans_Insert$$
-
-CREATE PROCEDURE FPS_RawTransaction.FPS_RT_RawTrans_Insert(IN ip_RawTransJson LONGTEXT)
-BEGIN
 	DROP TEMPORARY TABLE IF EXISTS Temp_Transactions;
 	CREATE TEMPORARY TABLE Temp_Transactions
     (
