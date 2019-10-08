@@ -44,25 +44,28 @@ BEGIN
 	CREATE TEMPORARY TABLE Temp_UserAgent
 	( 
 		UserAgentID 		BIGINT
-		,	BrowserID 		INT
 		,	BrowserName		VARCHAR(100)
-		,	OSID 			INT	
 		,	OSName			VARCHAR(100)
+        ,   CreatedDate		TIMESTAMP(4)
+        ,	BrowerID		INT
+        ,	OSID			INT
 	);
 
 	#=======================
 
-	INSERT INTO Temp_UserAgent(UserAgentID, BrowserID, BrowserName, OSID, OSName)
-	SELECT *
+	INSERT INTO Temp_UserAgent(UserAgentID, BrowserName, OSName, CreatedDate)
+	SELECT 	UserAgentID
+            , BrowserName
+            , OSName
+            , CreatedDate
 	FROM
 	JSON_TABLE(
 				ip_UserAgentJson
 				, "$[*]" COLUMNS(
-								UserAgentID 		BIGINT PATH "$.UserAgentId"         
-								, BrowserID			INT PATH "$.BrowserId" 
+								UserAgentID 		BIGINT PATH "$.UserAgentId"							
 								, BrowserName		VARCHAR(100) PATH "$.BrowserName" 
-								, OSID				INT PATH "$.OSId"  
-								, OSName		VARCHAR(100) PATH "$.OSName" 
+								, OSName			VARCHAR(100) PATH "$.OSName"
+                                , CreatedDate		TIMESTAMP(4) PATH "$.CreatedDate" 
 								)
 				) AS  tmpUA;
 
@@ -70,13 +73,13 @@ BEGIN
 	
 	# Insert Browser
 	INSERT IGNORE INTO FPS_DataCenter.Browser(BrowserName, CreatedDate)
-	SELECT		tmpBr.BrowserName, Now() 
+	SELECT		tmpBr.BrowserName, MIN(CreatedDate) 
     FROM 		Temp_UserAgent AS tmpBr 
     GROUP BY 	tmpBr.BrowserName;
 
 	# Insert OS
 	INSERT IGNORE INTO FPS_DataCenter.OS(OSName, CreatedDate)
-	SELECT 		tmpOs.OSName, Now() 
+	SELECT 		tmpOs.OSName, MIN(CreatedDate) 
 	FROM 		Temp_UserAgent AS tmpOs 
     GROUP BY 	tmpOs.OSName;
 

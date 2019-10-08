@@ -1,4 +1,5 @@
 DELIMITER $$
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID $$
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationXML LONGTEXT)
 BEGIN
 /*
@@ -22,7 +23,7 @@ BEGIN
       , SyncGraphDB TINYINT
 	);
     
-	SET RowCount = EXTRACTVALUE(ip_RawTransXml,'count(//root/association)');     
+	SET RowCount = EXTRACTVALUE(ip_AssociationXML,'count(//root/association)');     
     
 	WHILE RowIndex < RowCount DO
 		SET RowIndex := RowIndex + 1;
