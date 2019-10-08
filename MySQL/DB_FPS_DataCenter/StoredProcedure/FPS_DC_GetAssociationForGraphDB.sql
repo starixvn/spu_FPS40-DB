@@ -2,6 +2,7 @@
 DELIMITER $$
 USE FPS_DataCenter$$
 
+DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_GetAssociationForGraphDB;
 CREATE PROCEDURE FPS_DataCenter.FPS_DC_GetAssociationForGraphDB(IN ip_SyncGraphDB TINYINT, IN ip_Size INT)
 BEGIN
 	/*
