@@ -1,6 +1,6 @@
 DELIMITER $$
 DROP PROCEDURE IF EXISTS FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID $$
-CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationXML LONGTEXT)
+CREATE PROCEDURE FPS_DataCenter.FPS_DC_UpdateIsSyncGraphDBByAssociationID(IN ip_AssociationJSON JSON)
 BEGIN
 /*
 	Created:	20190610@Casey.Huynh
@@ -23,6 +23,7 @@ BEGIN
       , SyncGraphDB TINYINT
 	);
     
+    # ======================================
 	SET RowCount = EXTRACTVALUE(ip_AssociationXML,'count(//root/association)');     
     
 	WHILE RowIndex < RowCount DO
@@ -44,6 +45,21 @@ BEGIN
 		);
 		
 	END WHILE;
+    
+    INSERT INTO Temp_Association(AssociationID, SyncGraphDB)
+	SELECT 	AssociationID
+            , SyncGraphDB            
+	FROM
+	JSON_TABLE(
+				ip_AssociationJSON
+				, "$[*]" COLUMNS(
+								AssociationID BIGINT PATH "$.AssociationId"	
+								, SyncGraphDB TINYINT PATH "$.SyncGraphDB"	
+								)
+				) AS  tmpUA;
+                
+    # =========================================
+    
     
     UPDATE 		FPS_DataCenter.Association ass
     INNER JOIN	Temp_Association tas
