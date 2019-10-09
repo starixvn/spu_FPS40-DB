@@ -10,9 +10,9 @@ Reviewer:
 
 CREATE DATABASE IF NOT EXISTS FPS_Admin;
 
-
 CREATE TABLE FPS_Admin.Subscriber (
 	SubscriberID		INT			NOT NULL	AUTO_INCREMENT
+,   OldSubID			INT			NULL
 ,	SubscriberName		VARCHAR(30) NOT NULL
 ,	SubScriberPrefix	VARCHAR(30) NULL
 ,	CreatedDate			DATETIME	 	NULL
