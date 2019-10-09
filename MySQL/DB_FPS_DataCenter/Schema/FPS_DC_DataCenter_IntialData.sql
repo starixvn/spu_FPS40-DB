@@ -29,7 +29,7 @@ SELECT		0			AS UserAgentID
 INSERT INTO FPS_DataCenter.Device(DeviceID, FirstDeviceCode, UserAgentID, FirstStagingTransID, CreatedDate, DeviceStatus, InsertTime)
 SELECT		0 				AS DeviceID
 			, ''			AS FirstDeviceCode
-            , 1136548044	AS	UserAgentID
+            , 0				AS	UserAgentID
             , 0				AS	FirstStagingTransID
             , '2011-01-01'	AS	CreatedDate
             , 0				AS	DeviceStatus
