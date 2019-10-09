@@ -1,7 +1,7 @@
 USE `FPS_Admin`;
 /*
-		Created:	20190719@John.Ngo
-		Task:		Initial Data for LogType [Redmine ID: 116528]
+		Created:	20191009@CaseyHuynh
+		Task:		Initial Data for Subscriber[Redmine ID: 121756]
 		DB:			FPS_Admin
 		Original:
 
