@@ -20,7 +20,7 @@ BEGIN
     SELECT	sub.SubscriberID
 		,	sub.SubscriberName
 		,	CASE WHEN us.UserID IS NOT NULL THEN 1 ELSE 0 END AS 'isAssigned'
-        ,	EXISTS(SELECT UserID FROM dbo.UserSubscriber us WHERE UserID = ip_userId AND SubscriberID = -1) 'IsMaster'
+        ,	EXISTS(SELECT UserID FROM FPS_Admin.UserSubscriber us WHERE UserID = ip_userId AND SubscriberID = -1) 'IsMaster'
 	FROM FPS_Admin.Subscriber AS sub 
 		LEFT JOIN FPS_Admin.UserSubscriber AS us ON sub.SubscriberID = us.SubscriberID AND us.UserID = ip_userId
 	WHERE (us.UserID IS NULL OR us.UserID = ip_userId)
