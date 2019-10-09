@@ -39,8 +39,8 @@ BEGIN
 		)
 		VALUES
 		( 
-			EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::AssociationID'))
-			, EXTRACTVALUE(ip_RawTransXml,CONCAT(XpathRow,'/attribute::SyncGraphDB'))
+			EXTRACTVALUE(ip_AssociationXML,CONCAT(XpathRow,'/attribute::AssociationID'))
+			, EXTRACTVALUE(ip_AssociationXML,CONCAT(XpathRow,'/attribute::SyncGraphDB'))
 		);
 		
 	END WHILE;
