@@ -75,20 +75,8 @@ BEGIN
 				AND rt.IsProcessed = 0
     GROUP BY	su.SubscriberID
 				, rt.URL
-				, rt.LoginName;  
-  
-	#========INSERT: URL if not Existing============================================================================ 
-    INSERT INTO FPS_DataCenter.SubscriberURL (SubscriberID, URL, CreatedDate)
-    SELECT 		ta.SubscriberID
-				, ta.URL
-				, MIN(ta.CreatedDate) AS CreatedDate
-    FROM		Temp_Account AS ta
-	LEFT JOIN	FPS_DataCenter.SubscriberURL AS ur
-				ON ur.SubscriberID = ta.SubscriberID
-                AND	ur.URL = ta.URL
-	WHERE		ur.URL IS NULL
-    GROUP BY	ta.SubscriberID, ta.URL;  
-    
+				, rt.LoginName;    
+   
 	SELECT 		ta.LoginName
 				, LOWER(CONCAT(ta.SubscriberPrefix, ta.LoginName)) AS LoginNameWithPrefix
 				, ta.SubscriberName
