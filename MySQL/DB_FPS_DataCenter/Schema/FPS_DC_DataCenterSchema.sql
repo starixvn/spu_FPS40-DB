@@ -268,6 +268,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, TargetType		TINYINT								NOT NULL
 		, TargetLevel		TINYINT								NOT NULL
 		, CentralPointID	BIGINT								NOT NULL
+		, CentralPointType  INT									NOT NULL
 		, SubscriberID		INT									NOT NULL
 		, CreatedDate		DATETIME							NOT NULL
 		, CreatedBy			INT									NOT NULL
