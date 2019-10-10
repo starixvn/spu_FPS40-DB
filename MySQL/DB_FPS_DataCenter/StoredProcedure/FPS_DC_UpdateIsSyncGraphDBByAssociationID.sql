@@ -9,13 +9,10 @@ BEGIN
 	Original:
 
 	Revisions:
-	Param's Explanation (filtered by):
+	Param's Explanation (filtered by): 
 */
 
-	DECLARE RowIndex INT UNSIGNED DEFAULT 0;
-	DECLARE RowCount INT UNSIGNED;
-	DECLARE XpathRow VARCHAR(255);
-    
+   
     DROP TEMPORARY TABLE IF EXISTS Temp_Association;
     
 	CREATE TEMPORARY TABLE Temp_Association (
@@ -24,28 +21,7 @@ BEGIN
 	);
     
     # ======================================
-	SET RowCount = EXTRACTVALUE(ip_AssociationXML,'count(//root/association)');     
-    
-	WHILE RowIndex < RowCount DO
-		SET RowIndex := RowIndex + 1;
-		SET XpathRow = CONCAT(
-				'//root/association['
-			,   RowIndex
-			,   ']');
-            
-		INSERT INTO Temp_Association
-		(	
-			AssociationID
-            , SyncGraphDB
-		)
-		VALUES
-		( 
-			EXTRACTVALUE(ip_AssociationXML,CONCAT(XpathRow,'/attribute::AssociationID'))
-			, EXTRACTVALUE(ip_AssociationXML,CONCAT(XpathRow,'/attribute::SyncGraphDB'))
-		);
-		
-	END WHILE;
-    
+	   
     INSERT INTO Temp_Association(AssociationID, SyncGraphDB)
 	SELECT 	AssociationID
             , SyncGraphDB            

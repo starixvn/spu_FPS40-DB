@@ -57,7 +57,7 @@ BEGIN
     CREATE TEMPORARY TABLE Temp_UnhandleAction 
     (	
 		StagingTransID			BIGINT
-		, ActionResult			VARCHAR(30)
+		, ActionResult			VARCHAR(200)
         , CreatedDate			DATETIME	#	Date Only
     );
 
