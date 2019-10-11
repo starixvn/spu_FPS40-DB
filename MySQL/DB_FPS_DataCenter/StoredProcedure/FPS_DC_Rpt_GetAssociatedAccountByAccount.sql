@@ -18,7 +18,7 @@ BEGIN
 
 */
 	DROP TEMPORARY TABLE IF EXISTS tmp_CustId;
-	CREATE TEMPORARY TABLE tmp_CustId( custId INT, accountId INT );
+	CREATE TEMPORARY TABLE tmp_CustId( custId BIGINT, accountId BIGINT );
     
 	SET @sql = CONCAT("INSERT INTO tmp_CustId (custId) VALUES ('", REPLACE(custIds, ",", "'),('"),"');");
 	PREPARE stmt1 from @sql;

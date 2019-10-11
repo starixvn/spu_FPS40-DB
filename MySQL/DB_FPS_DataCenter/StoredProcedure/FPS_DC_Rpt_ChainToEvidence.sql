@@ -3,7 +3,7 @@ DROP procedure IF EXISTS `FPS_DC_Rpt_ChainToEvidence`;
 
 DELIMITER $$
 USE `FPS_DataCenter`$$
-CREATE PROCEDURE `FPS_DC_Rpt_ChainToEvidence` (IN targetId BIGINT, IN targetType TINYINT, IN userId INT, IN isMaster TINYINT)
+CREATE PROCEDURE `FPS_DC_Rpt_ChainToEvidence` (IN ip_TargetId BIGINT, IN ip_TargetType TINYINT, IN ip_UserId INT, IN ip_IsMaster TINYINT, IN ip_IsActiveEvidence TINYINT)
 BEGIN
 /*
 	Created: 20190909@Harvey
@@ -14,31 +14,26 @@ BEGIN
 	Revisions:
 	Param's Explanation (filtered by):
     
-    CALL FPS_DC_Rpt_ChainToEvidence (186,0,2809,0);
+    CALL FPS_DC_Rpt_ChainToEvidence (1995,0,6,1,1);
 */
 
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
-	IF isMaster = 0 THEN
-		SELECT acc.Username 'MainAccount'
-			,acc2.Username 'RootAccount'
-			,te.EvidenceCode
-		FROM FPS_DataCenter.TargetEvidence te
-			INNER JOIN FPS_DataCenter.Account acc ON te.TargetID = acc.AccountID
-			INNER JOIN FPS_DataCenter.Account acc2 ON te.CentralPointID = acc2.AccountID
-		WHERE te.TargetID = targetId
-			AND te.TargetType = targetType
-			AND (te.IsCreatedByMaster = 0 AND te.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = userId));
-	ELSE
-		SELECT acc.Username 'MainAccount'
-			,acc2.Username 'RootAccount'
-			,te.EvidenceCode
-		FROM FPS_DataCenter.TargetEvidence te
-			INNER JOIN FPS_DataCenter.Account acc ON te.TargetID = acc.AccountID
-			INNER JOIN FPS_DataCenter.Account acc2 ON te.CentralPointID = acc2.AccountID
-		WHERE te.TargetID = targetId
-			AND te.TargetType = targetType;
-	END IF;
+	SELECT acc.AccountID 'MainAccountID' 
+		,acc.Username 'MainAccount'
+		,acc2.AccountID 'RootAccountID'
+		,acc2.Username 'RootAccount'
+		,te.EvidenceCode
+        -- ,te.IsActive
+	FROM FPS_DataCenter.TargetEvidence te
+		INNER JOIN FPS_DataCenter.Account acc ON te.TargetId = acc.AccountID
+		INNER JOIN FPS_DataCenter.Account acc2 ON te.CentralPointID = acc2.AccountID
+	WHERE te.TargetId = ip_TargetId
+		AND te.TargetType = ip_TargetType
+        AND te.IsActive = ip_IsActiveEvidence
+		AND (ip_IsMaster = 1
+			OR (te.IsCreatedByMaster = 0 
+				AND te.SubscriberID IN (SELECT SubscriberID FROM FPS_Admin.UserSubscriber WHERE UserID = ip_UserId)));
     
     -- We need to handle for Exception !!!
     
