@@ -23,15 +23,15 @@ BEGIN
     SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
     INSERT INTO associationInfo (AccountId, AssociatedAccount, AssociatedDevice)
     SELECT ass.AccountID
-		,count(ass2.AccountID) 'AssociatedAccount'
-		,count(DISTINCT ass.DeviceID) 'AssociatedDevice'
+		,COUNT(ass2.AccountID) 'AssociatedAccount'
+		,COUNT(DISTINCT ass.DeviceID) 'AssociatedDevice'
 	FROM Association ass
 	LEFT JOIN Association ass2 ON ass.DeviceID = ass2.DeviceID
 		AND ass.AccountID <> ass2.AccountID
 	WHERE ass.AccountID = accountId;
     
     UPDATE associationInfo
-    SET SharedDevices = (SELECT count(1)
+    SET SharedDevices = (SELECT COUNT(DISTINCT ass.DeviceID)
 						 FROM Association ass
 						 LEFT JOIN Association ass2 ON ass.DeviceID = ass2.DeviceID
 							AND ass.AccountID <> ass2.AccountID
@@ -39,7 +39,7 @@ BEGIN
 							AND ass2.AccountID IS NOT NULL);
 	
     UPDATE associationInfo
-    SET NonShareDevices = (SELECT count(1)
+    SET NonShareDevices = (SELECT COUNT(DISTINCT ass.DeviceID)
 							FROM Association ass
 							LEFT JOIN Association ass2 ON ass.DeviceID = ass2.DeviceID
 								AND ass.AccountID <> ass2.AccountID
