@@ -10,7 +10,7 @@ Reviewer:
 USE FPS_DataCenter;
 
 INSERT INTO FPS_DataCenter.ActionResult(ActionResultID, ActionResultKey, ActionStatus, CreatedDate)
-VALUES (0,'',1,'2011-01-01')
+VALUES (0,'',-1,'2011-01-01')
 		, (1521261242,'login -> successfully',1,'2011-01-01')
         , (1862328242,'success',1,'2011-01-01')
         , (3686301690,'successfully',1,'2011-01-01')
