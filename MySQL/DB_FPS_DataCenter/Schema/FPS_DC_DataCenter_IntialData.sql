@@ -9,6 +9,12 @@ Reviewer:
 
 USE FPS_DataCenter;
 
+INSERT INTO FPS_DataCenter.ActionResult(ActionResultID, ActionResultKey, ActionStatus, CreatedDate)
+VALUES (0,'',1,'2011-01-01')
+		, (1521261242,'login -> successfully',1,'2011-01-01')
+        , (1862328242,'success',1,'2011-01-01')
+        , (2250713929,'fail',1,'2011-01-01');
+
 INSERT INTO FPS_DataCenter.OS(OSName, CreatedDate)
 SELECT		'' AS 'OSName'
             , '2011-01-01';
@@ -35,4 +41,11 @@ SELECT		0 				AS DeviceID
             , 0				AS	DeviceStatus
             , '2011-01-01'	AS InsertTime;
 
+INSERT INTO FPS_DataCenter.TransStatus(TransStatusName, StatusValue, Notes, IsTransformed, CreatedDate)
+Values('Valid Transaction', b'0','', 1,CURRENT_DATE())
+			,('Invalid Subscriber', b'1', 'Handle At SP FPS_DC_TransformData_UnhandleSubscriberAction', 0, CURRENT_DATE())
+			,( 'Invalid Action Result', b'10', 'Handle At SP FPS_DC_TransformData_UnhandleSubscriberAction', 1,CURRENT_DATE())
+            ,('Invalid Devicode - Empty', b'100', 'Handle At Web', 1,CURRENT_DATE())
+            ,('Invalid Login Name', b'1000', 'Handle At Web', 0,CURRENT_DATE())
+            ,('Invalid DI', b'10000', 'Handle At Web', 1,CURRENT_DATE());
 

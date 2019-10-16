@@ -107,7 +107,7 @@ CREATE TABLE FPS_DataCenter.Device(
 # =======Transactions============================================
 	CREATE TABLE FPS_DataCenter.`Transaction`(
 		ID					BIGINT								AUTO_INCREMENT
-		, StagingTransID		BIGINT	UNSIGNED					NOT NULL
+		, StagingTransID	BIGINT	UNSIGNED					NOT NULL
 		, LoginName			VARCHAR(50)							NOT NULL
         , TransDate			TIMESTAMP(4)						NOT	NULL
         , CreatedDate		DATETIME							NULL		COMMENT 'Date Only'	NOT	NULL        
@@ -126,7 +126,7 @@ CREATE TABLE FPS_DataCenter.Device(
 		, Flagged			SMALLINT							NULL		COMMENT 'captcha & browserless'		
         , PluginID					BIGINT 						NULL
 		, LoginNameWithPrefixID BIGINT							NULL
-        , TransStatus		INT									NULL
+        , TransStatus		BIT(16)								NULL
         , InsertTime		TIMESTAMP(4)						NULL
         
         , PRIMARY KEY	PK_Transaction_StagingTransID(StagingTransID)
@@ -322,6 +322,15 @@ CREATE TABLE FPS_DataCenter.IPTableLog(
 	
     , PRIMARY KEY	PK_IPTableLog_IPTableLogID(IPTableLogID)
 	, INDEX IX_IPTableLog_IPType_Flag (IsNewUpdate)
+);
+
+CREATE TABLE TransStatus(
+	 TransStatusName VARCHAR(100)
+     , StatusValue BIT(16)
+     , Notes VARCHAR(200)
+     , IsTransformed BIT(1)
+     , CreatedDate DATETIME
+     , PRIMARY KEY PK_TransStatus(StatusValue)
 );
 
 # ===================================================

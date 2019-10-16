@@ -18,7 +18,10 @@ BEGIN
 	Param's Explanation (filtered by):
 	*/
     
-	DECLARE	UnhandleStatus					TINYINT DEFAULT -1;
+	DECLARE	vrUnhandleStatus_Subscriber	 BIT(16) DEFAULT 1;
+    DECLARE	vrUnhandleStatus_Action	 BIT(16) DEFAULT 2;
+    DECLARE vrUnhandleStatus	TINYINT DEFAULT -1;
+    DECLARE vrNotTransformedStatus BIT(16);
     
 	### PERFORMANCE: START
     DECLARE		vrExecKey		BIGINT	UNSIGNED;
@@ -40,93 +43,103 @@ BEGIN
     INSERT INTO FPS_DataCenter.zzTracePerformance (ExecKey, StepID, SPName, Notes, StartTime, FromID, ToID)
     VALUES(vrExecKey, vrStepID, vrSPName,  vrNotes, vrStartTime, ip_FromStagingTransID, ip_ToStagingTransID);
 	
-	### PERFORMANCE: END  
-	
-	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-	
-    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
-    CREATE TEMPORARY TABLE Temp_UnhandleSubscriber 
+	### PERFORMANCE: END 
+    
+	DROP TEMPORARY TABLE IF EXISTS Temp_Transaction;
+    CREATE TEMPORARY TABLE Temp_Transaction 
     (	
 		StagingTransID			BIGINT
-		, SubscriberName		VARCHAR(30)
-        , Status				INT
-        , CreatedDate			DATETIME	#	Date Only
+		, SubscriberName		VARCHAR(30)        
+        , ActionResult			VARCHAR(200)
+        , URL					VARCHAR(250)
+        , TransStatus			INT
+        , CreatedDate			DATETIME	#	Date Only        
+        , SubscriberID			INT
+		, SubscriberStatus		TINYINT
+        , ActionResultID		BIGINT
+        , ActionResultStatus	TINYINT
+        , SubscriberURLID		BIGINT
+        , IsProcessed			BIT	DEFAULT 0
     );
-
-    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleAction;
-    CREATE TEMPORARY TABLE Temp_UnhandleAction 
-    (	
-		StagingTransID			BIGINT
-		, ActionResult			VARCHAR(200)
-        , CreatedDate			DATETIME	#	Date Only
-    );
-
-    SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-
-	INSERT INTO Temp_UnhandleSubscriber (StagingTransID, SubscriberName, Status, CreatedDate)
-    SELECT		rt.StagingTransID
-				, rt.SubscriberName
-                , su.Status
-                , rt.CreatedDate
-	FROM		FPS_RawTransaction.RawTransaction AS rt
-    LEFT JOIN	FPS_Admin.Subscriber AS su
+    
+	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
+    
+    INSERT	INTO Temp_Transaction(StagingTransID, SubscriberName, ActionResult, URL, TransStatus, CreatedDate, SubscriberID
+								, SubscriberStatus, ActionResultID, ActionResultStatus, SubscriberURLID)
+    SELECT 	rt.StagingTransID
+			, rt.SubscriberName
+            , rt.ActionResult
+            , rt.URL
+            , rt.TransStatus
+            , rt.CreatedDate
+            , su.SubscriberID
+            , su.Status
+            , ac.ActionResultID
+            , ac.ActionStatus
+            , ur.SubscriberURLID
+	FROM	FPS_RawTransaction.RawTransaction AS rt
+	LEFT JOIN	FPS_Admin.Subscriber AS su
 				ON rt.SubscriberName = su.SubscriberName
-	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
-				AND rt.IsProcessed = 0
-				AND (su.SubscriberName IS NULL
-					OR su.Status = UnhandleStatus);
-                    
-	INSERT INTO Temp_UnhandleAction (StagingTransID, ActionResult, CreatedDate)
-    SELECT		rt.StagingTransID
-				, rt.ActionResult
-                , rt.CreatedDate
-	FROM		FPS_RawTransaction.RawTransaction AS rt
-    LEFT JOIN	FPS_DataCenter.ActionResult AS ac
+	LEFT JOIN	FPS_DataCenter.ActionResult AS ac
 				ON ac.ActionResultID =  CRC32(LOWER(rt.ActionResult)) 
-	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
-				AND ac.ActionResultID IS NULL
-				AND rt.Isprocessed = 0; 
-
+	LEFT JOIN   FPS_DataCenter.SubscriberURL AS ur
+				ON su.SubscriberID = ur.SubscriberID
+					AND CRC32(LOWER(rt.URL)) = ur.SubscriberURLID
+    WHERE	rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
+				AND rt.IsProcessed = 0;   
+                
     #==UNHANDLE SUBSCRIBER================================================================
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
     
-	INSERT INTO FPS_Admin.Subscriber (SubscriberName, CreatedDate, Status)
+	INSERT IGNORE INTO FPS_Admin.Subscriber (SubscriberName, CreatedDate, Status)
 	SELECT 		ts.SubscriberName
 				, MIN(ts.CreatedDate) AS CreatedDate
-				, UnhandleStatus	AS Status # UnhandleStatus
-    FROM		Temp_UnhandleSubscriber AS ts   
-    WHERE		ts.Status IS NULL
+				, vrUnhandleStatus	AS Status # vrUnhandleStatus_Subscriber
+    FROM		Temp_Transaction AS ts   
+    WHERE		ts.SubscriberID IS NULL
     GROUP BY	ts.SubscriberName;
-    
-    UPDATE 		FPS_RawTransaction.RawTransaction AS rt
-    INNER JOIN	Temp_UnhandleSubscriber AS tt 
-				ON rt.StagingTransID = tt.StagingTransID                
-	SET			rt.IsProcessed = UnhandleStatus; 
 
-    #==UNHANDLE ACTION================================================================
-	
-    
+    #==UNHANDLE ACTION================================================================    
 	INSERT IGNORE INTO FPS_DataCenter.ActionResult (ActionResultID, ActionResultKey, CreatedDate, ActionStatus)
 	SELECT 		 CRC32(LOWER(ts.ActionResult)) AS ActionResultID
 				, ts.ActionResult
 				, MIN(ts.CreatedDate)	AS CreatedDate
-				, UnhandleStatus		AS ActionStatus # UnhandleStatus
-    FROM		Temp_UnhandleAction AS ts
+				, vrUnhandleStatus	AS ActionStatus # vrUnhandleStatus_Subscriber
+    FROM		Temp_Transaction AS ts
+	WHERE		ts.ActionResultID IS NULL
     GROUP BY	ts.ActionResult;
 	
     #===INSERT SUBCRIBERURL    
     INSERT IGNORE INTO FPS_DataCenter.SubscriberURL(SubscriberURLID, URL, SubscriberID, CreatedDate)
-    SELECT		CRC32(LOWER(rt.URL)) AS SubscriberURLID
-				, rt.URL
-                , su.SubscriberID
-                , MIN(rt.CreatedDate)
-	FROM		FPS_RawTransaction.RawTransaction AS rt
-    LEFT JOIN	FPS_Admin.Subscriber AS su
-				ON rt.SubscriberName = su.SubscriberName
-	WHERE		rt.StagingTransID BETWEEN ip_FromStagingTransID AND ip_ToStagingTransID
-				AND rt.IsProcessed = 0
-	GROUP BY	su.SubscriberID, rt.URL;    
+    SELECT		CRC32(LOWER(ts.URL)) AS SubscriberURLID
+				, ts.URL
+                , ts.SubscriberID
+                , MIN(ts.CreatedDate)
+	FROM		Temp_Transaction AS ts
+	WHERE		ts.SubscriberURLID IS NULL
+	GROUP BY	ts.SubscriberID, ts.URL;    
 	
+    SET vrNotTransformedStatus = FPS_DC_GetTransStatus_NotTransformed();
+
+    #===Update NOT Transform status for the Invalid Transaction (Invalid Subscriber)
+    UPDATE 		Temp_Transaction AS ts
+	SET			TransStatus = TransStatus | vrUnhandleStatus_Subscriber
+    WHERE		ts.SubscriberID IS NULL
+				OR ts.SubscriberStatus = vrUnhandleStatus;
+ 
+	#===Update NOT Transform status for the Invalid Transaction (Invalid Subscriber)
+    UPDATE 		Temp_Transaction AS ts
+	SET			TransStatus = TransStatus | vrUnhandleStatus_Action
+    WHERE		ts.ActionResultID IS NULL
+				OR ts.ActionResultStatus = vrUnhandleStatus; 
+
+    #==========================================================================
+    UPDATE		FPS_RawTransaction.RawTransaction AS rt
+    INNER JOIN	Temp_Transaction AS ts
+				ON rt.StagingTransID = ts.StagingTransID
+	SET			rt.IsProcessed = CASE WHEN (ts.TransStatus & vrNotTransformedStatus) != 0 THEN vrUnhandleStatus ELSE rt.IsProcessed END 
+				, rt.TransStatus = ts.TransStatus;
+    
 	### PERFORMANCE
 	SET	vrEndTime = CURRENT_TIMESTAMP(4);
     
@@ -135,10 +148,6 @@ BEGIN
 			, z.Duration = TIMESTAMPDIFF(MICROSECOND, vrStartTime, vrEndTime)
     WHERE	z.ExecKey = vrExecKey AND z.StepID = z.StepID;
     ### PERFORMANCE: END
-    
-	#=========================================================
-    DROP TEMPORARY TABLE IF EXISTS Temp_UnhandleSubscriber;
-    #==========================================================
  
 END$$
 DELIMITER ;

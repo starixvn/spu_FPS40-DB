@@ -11,7 +11,7 @@ CREATE DATABASE IF NOT EXISTS FPS_RawTransaction;
 
 DROP TABLE IF EXISTS FPS_RawTransaction.RawTransaction;
 CREATE TABLE FPS_RawTransaction.RawTransaction(
-	LoginName					VARCHAR(50) 					 	NOT NULL	
+	LoginName					VARCHAR(100) CHARACTER SET UTF8MB4 	NOT NULL	
 	, SubscriberName			VARCHAR(50) 						NOT NULL
 	, TransDate					TIMESTAMP(4)	 					NOT NULL
 	, CreatedDate				DATETIME	 						NOT NULL	COMMENT 'Date Only'
@@ -24,7 +24,7 @@ CREATE TABLE FPS_RawTransaction.RawTransaction(
 	, URL						VARCHAR(500) 						NULL
 	, ActionResult				VARCHAR(100) 						NULL
 	, InvalidDevice				TEXT	CHARACTER SET UTF8MB4		NULL
-    , TransStatus				TINYINT								NULL	  COMMENT 	'1: Valid; -1: InvalidDeviceCode'
+    , TransStatus				BIT(16)								NULL	  COMMENT 	'Refer Table TransStatus'
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 
 

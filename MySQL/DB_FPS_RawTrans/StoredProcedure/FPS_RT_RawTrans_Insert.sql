@@ -17,7 +17,7 @@ BEGIN
 	DROP TEMPORARY TABLE IF EXISTS Temp_Transactions;
 	CREATE TEMPORARY TABLE Temp_Transactions
     (
-		LoginName					VARCHAR(50) 					 	NOT NULL	
+		LoginName					VARCHAR(100) CHARACTER SET UTF8MB4 	NOT NULL	
 		, SubscriberName			VARCHAR(50) 						NOT NULL
 		, TransDate					TIMESTAMP(4)	 					NOT NULL
 		, DeviceCode				VARCHAR(62) 						NULL		COMMENT 'Device Inject Code: 32 characters is auto generated'
@@ -29,7 +29,7 @@ BEGIN
 		, URL						VARCHAR(500) 						NULL
 		, ActionResult				VARCHAR(100) 						NULL
 		, InvalidDevice				TEXT	CHARACTER SET UTF8MB4		NULL
-		, TransStatus				TINYINT								NULL	
+		, TransStatus				BIT(16)								NULL	
     );     
 		
 	INSERT INTO Temp_Transactions
@@ -64,7 +64,7 @@ BEGIN
 	FROM	JSON_TABLE(
 			ip_RawTransJson,
 			 "$[*]" COLUMNS(
-							  LoginName				VARCHAR(50) 	PATH "$.LoginName"       
+							  LoginName				VARCHAR(100) CHARACTER SET UTF8MB4	PATH "$.LoginName"       
 							, SubscriberName		VARCHAR(50) 	PATH "$.SubscriberName"   
 							, TransDate				TIMESTAMP(4) 	PATH "$.TransDate"
 							, DeviceCode			VARCHAR(64)		PATH "$.DeviceCode"
@@ -76,7 +76,7 @@ BEGIN
 							, URL					VARCHAR(500) 	PATH "$.URL"
 							, ActionResult			VARCHAR(100) 	PATH "$.ActionResult"
                             , InvalidDevice	TEXT	CHARACTER SET UTF8MB4 	PATH "$.InvalidDevice"
-                            , TransStatus	TINYINT		 					PATH "$.TransStatus"
+                            , TransStatus	BIT(16)		 					PATH "$.TransStatus"
 							)
 		   ) AS  rt; 
 	

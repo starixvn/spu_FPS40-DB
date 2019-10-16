@@ -47,7 +47,7 @@ BEGIN
 		,	BrowserName		VARCHAR(100)
 		,	OSName			VARCHAR(100)
         ,   CreatedDate		TIMESTAMP(4)
-        ,	BroswerID		INT
+        ,	BrowserID		INT
         ,	OSID			INT
 	);
 
