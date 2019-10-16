@@ -13,6 +13,7 @@ INSERT INTO FPS_DataCenter.ActionResult(ActionResultID, ActionResultKey, ActionS
 VALUES (0,'',1,'2011-01-01')
 		, (1521261242,'login -> successfully',1,'2011-01-01')
         , (1862328242,'success',1,'2011-01-01')
+        , (3686301690,'successfully',1,'2011-01-01')
         , (2250713929,'fail',1,'2011-01-01');
 
 INSERT INTO FPS_DataCenter.OS(OSName, CreatedDate)
@@ -45,7 +46,7 @@ INSERT INTO FPS_DataCenter.TransStatus(TransStatusName, StatusValue, Notes, IsTr
 Values('Valid Transaction', b'0','', 1,CURRENT_DATE())
 			,('Invalid Subscriber', b'1', 'Handle At SP FPS_DC_TransformData_UnhandleSubscriberAction', 0, CURRENT_DATE())
 			,( 'Invalid Action Result', b'10', 'Handle At SP FPS_DC_TransformData_UnhandleSubscriberAction', 1,CURRENT_DATE())
-            ,('Invalid Devicode - Empty', b'100', 'Handle At Web', 1,CURRENT_DATE())
+            ,('Invalid Devicode_Empty', b'100', 'Handle At Web', 1,CURRENT_DATE())
             ,('Invalid Login Name', b'1000', 'Handle At Web', 0,CURRENT_DATE())
             ,('Invalid DI', b'10000', 'Handle At Web', 1,CURRENT_DATE());
 
