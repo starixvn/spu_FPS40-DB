@@ -1,4 +1,3 @@
-
 DELIMITER $$
 USE FPS_DataCenter$$
 
@@ -12,34 +11,17 @@ BEGIN
 	Original:
 
 	Revisions:
+		- 20191022@Harvey.Nguyen:	remove temp table & get more column
 	Param's Explanation (filtered by):
 	*/
     #=========================================================================================
-    DROP TABLE IF EXISTS Temp_Association;
-	
-	CREATE TEMPORARY TABLE Temp_Association
-    ( 
-		AssociationID		BIGINT
-		, DeviceID			BIGINT
-        , AccountID			BIGINT
-        , SubscriberID		SMALLINT
-        , SubscriberName	VARCHAR(30)		CHARACTER SET utf8	NULL
-        , IsDeposit			TINYINT
-        , CustID			BIGINT								NULL
-		, Username			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, Username2			VARCHAR(50)		CHARACTER SET utf8	NULL
-		, RoleID			TINYINT							NULL
-		, CurrencyID		SMALLINT						NULL
-		, CurrencyName		VARCHAR(50)		CHARACTER SET utf8	NULL        
-	);    
 	   
 	SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;    
 
-	#=======GET Associate List to insert into GraphDB=================================================================================================================	
-	INSERT INTO Temp_Association(AssociationID, DeviceID, AccountID, SubscriberID, SubscriberName, IsDeposit, CustID, Username, Username2, RoleID, CurrencyID, CurrencyName)
 	SELECT	ass.AssociationID
 			, ass.DeviceID
 			, ass.AccountID
+            , ass.CreatedDate		'AssociatedDate'	
 			, sub.SubscriberID
 			, sub.SubscriberName
 			, sub.IsDeposit
@@ -49,6 +31,7 @@ BEGIN
 			, acc.RoleID
 			, acc.CurrencyID
 			, acc.CurrencyName
+            , acc.CreatedDate		'AccountCreatedDate'
 	FROM		FPS_DataCenter.Association ass
 	INNER JOIN	FPS_Admin.Subscriber sub
 				ON ass.SubscriberID = sub.SubscriberID
@@ -56,22 +39,8 @@ BEGIN
 				ON ass.AccountID = acc.AccountID
 	WHERE	ass.SyncGraphDB = ip_SyncGraphDB
 			AND sub.IsDeposit IS NOT NULL
-			AND acc.CustID IS NOT NULL
+			AND acc.CustID IS NOT NULL AND acc.CustID <> 0
 	LIMIT ip_Size;	
-    
-    SELECT 	tas.AssociationID
-			, tas.DeviceID
-			, tas.AccountID
-			, tas.SubscriberID
-			, tas.SubscriberName
-			, tas.IsDeposit
-			, tas.CustID
-			, tas.Username
-			, tas.Username2
-			, tas.RoleID
-			, tas.CurrencyID
-			, tas.CurrencyName
-    FROM	Temp_Association tas;
     
     SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;    
 END$$
